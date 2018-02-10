@@ -1,3 +1,7 @@
+// IoT Wifi packages is used to manage WiFi AP and Station (client) modes on
+// a Raspberry Pi or other arm device. This code is intended to run in it's
+// corresponding Alpine docker container.
+
 package iotwifi
 
 import (
@@ -13,11 +17,44 @@ type CmdRunner struct {
 	Messages chan CmdOut
 }
 
+// CmdOut structures command output
 type CmdOut struct {
 	Id      string
 	Command string
 	Message string
 	Error   bool
+}
+
+// RunWifi starts AP and Station
+func RunWifi(log bunyan.Logger, messages chan CmdOut) {
+
+	log.Info("Loading IoT Wifi...")
+
+	cmdRunner := CmdRunner{
+		Log:      log,
+		Messages: messages,
+	}
+
+	cmd := exec.Command("ifconfig", "uap0")
+	go cmdRunner.ProcessCmd("myping", *cmd)
+
+	staticFields := make(map[string]interface{})
+
+	// command output loop
+	//
+	for {
+		out := <-messages // Block until we receive a message on the channel
+
+		if out.Command == "fun" {
+			log.Info("GOT FUN!!!!")
+		}
+
+		staticFields["cmd_id"] = out.Id
+		staticFields["cmd"] = out.Command
+		staticFields["is_error"] = out.Error
+
+		log.Info(staticFields, out.Message)
+	}
 }
 
 // ProcessCmd

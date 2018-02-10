@@ -3,8 +3,9 @@
 package main
 
 import (
+	"io"
 	"os"
-	"os/exec"
+	"net/http"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 	"github.com/cjimti/iotwifi/iotwifi"
@@ -22,30 +23,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	bunyanLogger.Info("Loading IoT Wifi...")
 
 	messages := make(chan iotwifi.CmdOut, 1)
 
-	cmdRunner := iotwifi.CmdRunner{
-		Log:      bunyanLogger,
-		Messages: messages,
-	}
-
-	cmd := exec.Command("ifconfig", "uap0")
-	go cmdRunner.ProcessCmd("myping", *cmd)
-
-	staticFields := make(map[string]interface{})
-
-	// command output loop
-	//
-	for {
-		out := <-messages // Block until we receive a message on the channel
-
-		staticFields["cmd_id"] = out.Id
-		staticFields["cmd"] = out.Command
-		staticFields["is_error"] = out.Error
-
-		bunyanLogger.Info(staticFields, out.Message)
-	}
-
+	go iotwifi.RunWifi(bunyanLogger, messages)
+	
+	http.HandleFunc("/kill", func(w http.ResponseWriter, r *http.Request) {
+		messages <- iotwifi.CmdOut{ Command: "Kill" }
+		io.WriteString(w, "OK\n");
+	})
+	
+	http.ListenAndServe(":8080", nil)
 }
