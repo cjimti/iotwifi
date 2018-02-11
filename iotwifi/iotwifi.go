@@ -14,11 +14,12 @@ import (
 // CmdRunner
 type CmdRunner struct {
 	Log      bunyan.Logger
-	Messages chan CmdOut
+	Messages chan CmdMessage
+	Handlers map[string]func(message *CmdMessage)
 }
 
-// CmdOut structures command output
-type CmdOut struct {
+// CmdMessage structures command output
+type CmdMessage struct {
 	Id      string
 	Command string
 	Message string
@@ -26,17 +27,26 @@ type CmdOut struct {
 }
 
 // RunWifi starts AP and Station
-func RunWifi(log bunyan.Logger, messages chan CmdOut) {
+func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 
 	log.Info("Loading IoT Wifi...")
 
 	cmdRunner := CmdRunner{
 		Log:      log,
 		Messages: messages,
+		Handlers: make(map[string]func(message *CmdMessage), 0),
 	}
 
 	cmd := exec.Command("ifconfig", "uap0")
-	go cmdRunner.ProcessCmd("myping", *cmd)
+	go cmdRunner.ProcessCmd("ifconfig_uap0", *cmd)
+
+	cmdRunner.HandleFunc("ifconfig_uap", func(cmdMessage *CmdMessage) {
+		log.Info("got ifconfig command")
+	})
+
+	cmdRunner.HandleFunc("kill", func(cmdMessage *CmdMessage) {
+		log.Info("got kill")
+	})
 
 	staticFields := make(map[string]interface{})
 
@@ -45,16 +55,21 @@ func RunWifi(log bunyan.Logger, messages chan CmdOut) {
 	for {
 		out := <-messages // Block until we receive a message on the channel
 
-		if out.Command == "fun" {
-			log.Info("GOT FUN!!!!")
-		}
-
 		staticFields["cmd_id"] = out.Id
 		staticFields["cmd"] = out.Command
 		staticFields["is_error"] = out.Error
 
 		log.Info(staticFields, out.Message)
+
+		if handler, ok := cmdRunner.Handlers[out.Id]; ok {
+			handler(&out)
+		}
 	}
+}
+
+// HandleFunc is a function that gets all channel messages for a command id
+func (c *CmdRunner) HandleFunc(cmdId string, handler func(cmdMessage *CmdMessage)) {
+	c.Handlers[cmdId] = handler
 }
 
 // ProcessCmd
@@ -72,7 +87,7 @@ func (c *CmdRunner) ProcessCmd(id string, cmd exec.Cmd) {
 	stdOutScanner := bufio.NewScanner(cmdStdoutReader)
 	go func() {
 		for stdOutScanner.Scan() {
-			c.Messages <- CmdOut{
+			c.Messages <- CmdMessage{
 				Id:      id,
 				Command: cmd.Path,
 				Message: stdOutScanner.Text(),
@@ -84,7 +99,7 @@ func (c *CmdRunner) ProcessCmd(id string, cmd exec.Cmd) {
 	stdErrScanner := bufio.NewScanner(cmdStderrReader)
 	go func() {
 		for stdErrScanner.Scan() {
-			c.Messages <- CmdOut{
+			c.Messages <- CmdMessage{
 				Id:      id,
 				Command: cmd.Path,
 				Message: stdErrScanner.Text(),

@@ -4,8 +4,8 @@ package main
 
 import (
 	"io"
-	"os"
 	"net/http"
+	"os"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 	"github.com/cjimti/iotwifi/iotwifi"
@@ -24,14 +24,14 @@ func main() {
 		panic(err)
 	}
 
-	messages := make(chan iotwifi.CmdOut, 1)
+	messages := make(chan iotwifi.CmdMessage, 1)
 
 	go iotwifi.RunWifi(bunyanLogger, messages)
-	
+
 	http.HandleFunc("/kill", func(w http.ResponseWriter, r *http.Request) {
-		messages <- iotwifi.CmdOut{ Command: "Kill" }
-		io.WriteString(w, "OK\n");
+		messages <- iotwifi.CmdMessage{Id: "kill"}
+		io.WriteString(w, "OK\n")
 	})
-	
+
 	http.ListenAndServe(":8080", nil)
 }
