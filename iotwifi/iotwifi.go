@@ -16,7 +16,7 @@ import (
 type CmdRunner struct {
 	Log      bunyan.Logger
 	Messages chan CmdMessage
-	Handlers map[string]func(message *CmdMessage)
+	Handlers map[string]func(CmdMessage)
 }
 
 // CmdMessage structures command output
@@ -35,23 +35,41 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	cmdRunner := CmdRunner{
 		Log:      log,
 		Messages: messages,
-		Handlers: make(map[string]func(message *CmdMessage), 0),
+		Handlers: make(map[string]func(cmsg CmdMessage), 0),
 	}
 
-	cmdRunner.HandleFunc("ifconfig_uap0", func(cmdMessage *CmdMessage) {
-		log.Info("GOT------> %s", cmdMessage.Message)
-		if strings.Contains(cmdMessage.Message, "uap0 does not exist") {
-			log.Info("GOT no interface uap0")
+	// 1 - check for the uap0 interface
+	//
+	cmdRunner.HandleFunc("ifconfig_uap0", func(cmsg CmdMessage) {
+		var cmd *exec.Cmd
+		
+		if strings.Contains(cmsg.Message, "Device not found") {
+			// no uap so lets up it
+			log.Info("uap0 not found... starting one up.")
+			cmd = exec.Command("iw", "phy", "phy0", "interface", "add", "uap0", "type", "__ap");
+			go cmdRunner.ProcessCmd("iw_up_uap0", cmd)
+		}
+
+		if strings.Contains(cmsg.Message, "uap0      Link encap") {
+			log.Info("uap0 is available")
+			cmd = exec.Command("ifconfig","uap0","up");
+			cmdRunner.ProcessCmd("uap_0_up", cmd)
+
+			cmd = exec.Command("ifconfig","uap0","192.168.27.1")
+			cmdRunner.ProcessCmd("uap_0_configure", cmd)
 		}
 	})
 
-	cmd := exec.Command("ifconfig", "uap0")
-	go cmdRunner.ProcessCmd("ifconfig_uap0", *cmd)
 
-	cmdRunner.HandleFunc("kill", func(cmdMessage *CmdMessage) {
+	
+	go cmdRunner.ProcessCmd("ifconfig_uap0", exec.Command("ifconfig", "uap0"))
+
+	
+	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
 		log.Info("got kill")
 	})
 
+	
 	staticFields := make(map[string]interface{})
 
 	// command output loop
@@ -66,18 +84,20 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		log.Info(staticFields, out.Message)
 
 		if handler, ok := cmdRunner.Handlers[out.Id]; ok {
-			handler(&out)
+			handler(out)
 		}
 	}
 }
 
 // HandleFunc is a function that gets all channel messages for a command id
-func (c *CmdRunner) HandleFunc(cmdId string, handler func(cmdMessage *CmdMessage)) {
+func (c *CmdRunner) HandleFunc(cmdId string, handler func(cmdMessage CmdMessage)) {
 	c.Handlers[cmdId] = handler
 }
 
 // ProcessCmd
-func (c *CmdRunner) ProcessCmd(id string, cmd exec.Cmd) {
+func (c *CmdRunner) ProcessCmd(id string, cmd *exec.Cmd) {
+	c.Log.Debug("ProcessCmd got %s", id);
+	
 	cmdStdoutReader, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)
@@ -111,7 +131,7 @@ func (c *CmdRunner) ProcessCmd(id string, cmd exec.Cmd) {
 			}
 		}
 	}()
-
+	
 	err = cmd.Start()
 	if err != nil {
 		panic(err)
