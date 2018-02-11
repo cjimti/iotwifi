@@ -7,6 +7,7 @@ package iotwifi
 import (
 	"bufio"
 	"os/exec"
+	"strings"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
@@ -37,12 +38,15 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		Handlers: make(map[string]func(message *CmdMessage), 0),
 	}
 
+	cmdRunner.HandleFunc("ifconfig_uap0", func(cmdMessage *CmdMessage) {
+		log.Info("GOT------> %s", cmdMessage.Message)
+		if strings.Contains(cmdMessage.Message, "uap0 does not exist") {
+			log.Info("GOT no interface uap0")
+		}
+	})
+
 	cmd := exec.Command("ifconfig", "uap0")
 	go cmdRunner.ProcessCmd("ifconfig_uap0", *cmd)
-
-	cmdRunner.HandleFunc("ifconfig_uap", func(cmdMessage *CmdMessage) {
-		log.Info("got ifconfig command")
-	})
 
 	cmdRunner.HandleFunc("kill", func(cmdMessage *CmdMessage) {
 		log.Info("got kill")
