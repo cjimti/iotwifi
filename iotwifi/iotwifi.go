@@ -47,20 +47,23 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		Runner: cmdRunner,
 	}
 
-	
+
+	// listen to kill messages
 	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
 		log.Error("GOT KILL")
-		//os.Exit(1)
+		os.Exit(1)
 	})
 
+	// listen to wpa_supplicant messages
 	cmdRunner.HandleFunc("wpa_supplicant", func(cmsg CmdMessage) {
 		if strings.Contains(cmsg.Message, "P2P: Update channel list") {
-			//ConnectWifi(cmdRunner)
+			// @TODO scan networks
 		}
 	})
 
 	// listen to hostapd and start dnsmasq
 	cmdRunner.HandleFunc("hostapd", func(cmsg CmdMessage) {
+
 		if strings.Contains(cmsg.Message, "uap0: AP-DISABLED") {
 			log.Error("CANNOT START AP")
 			cmsg.Cmd.Process.Kill()
@@ -77,19 +80,17 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	// check for the uap0 interface
 	//
 	cmdRunner.HandleFunc("ifconfig_uap0", func(cmsg CmdMessage) {
-		var cmd *exec.Cmd
 		
 		if strings.Contains(cmsg.Message, "Device not found") {
 			// no uap so lets create it
 			log.Info("uap0 not found... starting one up.")
 			cmsg.Cmd.Wait()
 			
-			cmd = exec.Command("iw", "phy", "phy0", "interface", "add", "uap0", "type", "__ap");
-			cmd.Start()
-			cmd.Wait()
-
+			// add interface
+			command.AddApInterface()
+			
 			// re-check
-			command.CheckInterface()
+			command.CheckApInterface()
 			return
 		}
 
@@ -99,36 +100,30 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 			cmsg.Cmd.Wait()
 
 			// up uap0
-			cmd = exec.Command("ifconfig","uap0","up");
-			cmd.Start()
-			cmd.Wait()
-
+			command.UpApInterface()
+			
 			// configure uap0
-			cmd = exec.Command("ifconfig","uap0","192.168.27.1")
-			cmd.Start()
-			cmd.Wait()
+			command.ConfigureApInterface()
 
+			// start hostapd
 			command.StartHostapd()
 		}
 	})
 
-	// remove interface
-	cmd := exec.Command("iw","dev","uap0","del")
-	cmd.Start()
-	cmd.Wait()
+	// remove AP interface (if there is one) and start fresh
+	command.RemoveApInterface()
 
+	// start wpa_supplicant (wifi client)
 	command.StartWpaSupplicant()
 
-	// Chain of events starts here:
-	command.CheckInterface()
+	// start ap interface, chain of events for hostapd and dnsmasq starts here
+	command.CheckApInterface()
 
-	//cmd := exec.Command("ping","-c","10","8.8.8.8")
-	//go cmdRunner.ProcessCmd("ping", cmd)
-	
 	// staticFields for logger
 	staticFields := make(map[string]interface{})
 
-	// command output loop
+	// command output loop (channel messages)
+	// loop, log and dispatch to handlers
 	//
 	for {
 		out := <-messages // Block until we receive a message on the channel

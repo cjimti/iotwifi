@@ -12,8 +12,36 @@ type Command struct {
 	Runner   CmdRunner
 }
 
+// RemoveApInterface
+func (c *Command) RemoveApInterface() {
+	cmd := exec.Command("iw","dev","uap0","del")
+	cmd.Start()
+	cmd.Wait()
+}
+
+// ConfigureApInterface
+func (c *Command) ConfigureApInterface() {
+	cmd := exec.Command("ifconfig","uap0","192.168.27.1")
+	cmd.Start()
+	cmd.Wait()	
+}
+
+// UpApInterface
+func (c *Command) UpApInterface() {
+	cmd := exec.Command("ifconfig","uap0","up");
+	cmd.Start()
+	cmd.Wait()	
+}
+
+// AddInterface
+func (c *Command) AddApInterface() {
+	cmd := exec.Command("iw", "phy", "phy0", "interface", "add", "uap0", "type", "__ap");
+	cmd.Start()
+	cmd.Wait()
+}
+
 // CheckInterface
-func (c *Command) CheckInterface() {
+func (c *Command) CheckApInterface() {
 	cmd := exec.Command("ifconfig", "uap0")
 	go c.Runner.ProcessCmd("ifconfig_uap0", cmd)
 }
