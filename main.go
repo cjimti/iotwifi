@@ -24,6 +24,7 @@ func main() {
 		panic(err)
 	}
 
+	
 	messages := make(chan iotwifi.CmdMessage, 1)
 
 	go iotwifi.RunWifi(bunyanLogger, messages)
