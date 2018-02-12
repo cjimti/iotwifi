@@ -19,20 +19,24 @@ func main() {
 		Level:  bunyan.LogLevelDebug,
 	}
 
-	bunyanLogger, err := bunyan.CreateLogger(logConfig)
+	blog, err := bunyan.CreateLogger(logConfig)
 	if err != nil {
 		panic(err)
 	}
 
+	blog.Info("Starting IoT Wifi...")
+	
 	
 	messages := make(chan iotwifi.CmdMessage, 1)
 
-	go iotwifi.RunWifi(bunyanLogger, messages)
+	go iotwifi.RunWifi(blog, messages)
 
 	http.HandleFunc("/kill", func(w http.ResponseWriter, r *http.Request) {
 		messages <- iotwifi.CmdMessage{Id: "kill"}
 		io.WriteString(w, "OK\n")
 	})
 
+	blog.Info("HTTP Listening on 8080")
 	http.ListenAndServe(":8080", nil)
+
 }

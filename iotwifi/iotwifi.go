@@ -18,7 +18,7 @@ type CmdRunner struct {
 	Log      bunyan.Logger
 	Messages chan CmdMessage
 	Handlers map[string]func(CmdMessage)
-	Commands  map[string]*exec.Cmd
+	Commands  map[string]*exec.Cmd	
 }
 
 // CmdMessage structures command output
@@ -27,6 +27,7 @@ type CmdMessage struct {
 	Command string
 	Message string
 	Error   bool
+	Cmd     *exec.Cmd
 }
 
 // RunWifi starts AP and Station
@@ -43,7 +44,7 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	
 	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
 		log.Error("GOT KILL")
-		os.Exit(1)
+		//os.Exit(1)
 	})
 
 	cmdRunner.HandleFunc("wpa_supplicant", func(cmsg CmdMessage) {
@@ -56,13 +57,14 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	cmdRunner.HandleFunc("hostapd", func(cmsg CmdMessage) {
 		if strings.Contains(cmsg.Message, "uap0: AP-DISABLED") {
 			log.Error("CANNOT START AP")
-			os.Exit(1)
+			cmsg.Cmd.Process.Kill()
+			cmsg.Cmd.Wait()
+			os.Exit(3)
 		}
 		
 		if strings.Contains(cmsg.Message, "uap0: AP-ENABLED") {
 			log.Info("Hostapd enabeled.");
 			StartDnsmasq(cmdRunner)
-			//StartWpaSupplicant(cmdRunner)
 		}
 	})
 
@@ -74,29 +76,49 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		if strings.Contains(cmsg.Message, "Device not found") {
 			// no uap so lets create it
 			log.Info("uap0 not found... starting one up.")
+			cmsg.Cmd.Wait()
+			
 			cmd = exec.Command("iw", "phy", "phy0", "interface", "add", "uap0", "type", "__ap");
-			go cmdRunner.ProcessCmd("iw_up_uap0", cmd)
+			cmd.Start()
+			cmd.Wait()
+
+			// re-check
+			CheckInterface(cmdRunner)
+			return
 		}
 
 		if strings.Contains(cmsg.Message, "uap0      Link encap") {
 			
 			log.Info("uap0 is available")
+			cmsg.Cmd.Wait()
 
 			// up uap0
 			cmd = exec.Command("ifconfig","uap0","up");
-			cmdRunner.ProcessCmd("uap_0_up", cmd)
+			cmd.Start()
+			cmd.Wait()
 
 			// configure uap0
 			cmd = exec.Command("ifconfig","uap0","192.168.27.1")
-			cmdRunner.ProcessCmd("uap_0_configure", cmd)
+			cmd.Start()
+			cmd.Wait()
 
 			StartHostapd(cmdRunner)
-
 		}
 	})
-	
-	go cmdRunner.ProcessCmd("ifconfig_uap0", exec.Command("ifconfig", "uap0"))
 
+	// remove interface
+	cmd := exec.Command("iw","dev","uap0","del")
+	cmd.Start()
+	cmd.Wait()
+
+	StartWpaSupplicant(cmdRunner)
+
+	// Chain of events starts here:
+	CheckInterface(cmdRunner)
+
+	//cmd := exec.Command("ping","-c","10","8.8.8.8")
+	//go cmdRunner.ProcessCmd("ping", cmd)
+	
 	// staticFields for logger
 	staticFields := make(map[string]interface{})
 
@@ -147,6 +169,7 @@ func (c *CmdRunner) ProcessCmd(id string, cmd *exec.Cmd) {
 				Command: cmd.Path,
 				Message: stdOutScanner.Text(),
 				Error:   false,
+				Cmd:     cmd,
 			}
 		}
 	}()
@@ -159,12 +182,12 @@ func (c *CmdRunner) ProcessCmd(id string, cmd *exec.Cmd) {
 				Command: cmd.Path,
 				Message: stdErrScanner.Text(),
 				Error:   true,
+				Cmd:     cmd,
 			}
 		}
 	}()
 	
 	err = cmd.Start()
-	cmd.Process.Wait()
 	
 	if err != nil {
 		panic(err)
