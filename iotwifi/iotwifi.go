@@ -164,6 +164,8 @@ func (c *CmdRunner) ProcessCmd(id string, cmd *exec.Cmd) {
 	}()
 	
 	err = cmd.Start()
+	cmd.Process.Wait()
+	
 	if err != nil {
 		panic(err)
 	}
