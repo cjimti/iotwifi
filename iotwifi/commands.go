@@ -2,16 +2,24 @@ package iotwifi
 
 import (
 	"os/exec"
+
+	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
 
+// Command for device network commands
+type Command struct {
+	Log      bunyan.Logger
+	Runner   CmdRunner
+}
+
 // CheckInterface
-func CheckInterface(cmdRunner CmdRunner) {
+func (c *Command) CheckInterface() {
 	cmd := exec.Command("ifconfig", "uap0")
-	go cmdRunner.ProcessCmd("ifconfig_uap0", cmd)
+	go c.Runner.ProcessCmd("ifconfig_uap0", cmd)
 }
 
 // StartWpaSupplicant
-func StartWpaSupplicant(cmdRunner CmdRunner) {
+func (c *Command) StartWpaSupplicant() {
 	args := []string{
 		"-d",
 		"-Dnl80211",
@@ -20,11 +28,11 @@ func StartWpaSupplicant(cmdRunner CmdRunner) {
 	}
 	
 	cmd := exec.Command("wpa_supplicant", args...)
-	go cmdRunner.ProcessCmd("wpa_supplicant", cmd)
+	go c.Runner.ProcessCmd("wpa_supplicant", cmd)
 }
 
 // StartDnsmasq
-func StartDnsmasq(cmdRunner CmdRunner) {
+func (c *Command) StartDnsmasq() {
 	// hostapd is enabled, fire up dnsmasq
 	args := []string{
 		"--no-hosts", // Don't read the hostnames in /etc/hosts.
@@ -39,17 +47,17 @@ func StartDnsmasq(cmdRunner CmdRunner) {
 	}
 	
 	cmd := exec.Command("dnsmasq", args...)
-	go cmdRunner.ProcessCmd("dnsmasq", cmd)
+	go c.Runner.ProcessCmd("dnsmasq", cmd)
 }
 
 // StartHostapd
-func StartHostapd(cmdRunner CmdRunner) {
+func (c *Command) StartHostapd() {
 
-	cmdRunner.Log.Info("Starting hostapd.");
+	c.Runner.Log.Info("Starting hostapd.");
 	
 	cmd := exec.Command("hostapd", "-d", "/dev/stdin")
 	hostapdPipe, _ := cmd.StdinPipe()
-	cmdRunner.ProcessCmd("hostapd", cmd)
+	c.Runner.ProcessCmd("hostapd", cmd)
 	
 	cfg := `interface=uap0
 ssid=iotwifi2

@@ -41,6 +41,12 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		Handlers: make(map[string]func(cmsg CmdMessage), 0),
 		Commands: make(map[string]*exec.Cmd, 0),
 	}
+
+	command := &Command{
+		Log: log,
+		Runner: cmdRunner,
+	}
+
 	
 	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
 		log.Error("GOT KILL")
@@ -64,7 +70,7 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		
 		if strings.Contains(cmsg.Message, "uap0: AP-ENABLED") {
 			log.Info("Hostapd enabeled.");
-			StartDnsmasq(cmdRunner)
+			command.StartDnsmasq()
 		}
 	})
 
@@ -83,7 +89,7 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 			cmd.Wait()
 
 			// re-check
-			CheckInterface(cmdRunner)
+			command.CheckInterface()
 			return
 		}
 
@@ -102,7 +108,7 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 			cmd.Start()
 			cmd.Wait()
 
-			StartHostapd(cmdRunner)
+			command.StartHostapd()
 		}
 	})
 
@@ -111,10 +117,10 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	cmd.Start()
 	cmd.Wait()
 
-	StartWpaSupplicant(cmdRunner)
+	command.StartWpaSupplicant()
 
 	// Chain of events starts here:
-	CheckInterface(cmdRunner)
+	command.CheckInterface()
 
 	//cmd := exec.Command("ping","-c","10","8.8.8.8")
 	//go cmdRunner.ProcessCmd("ping", cmd)
