@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"os/exec"
 	"strings"
+	"os"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
@@ -17,6 +18,7 @@ type CmdRunner struct {
 	Log      bunyan.Logger
 	Messages chan CmdMessage
 	Handlers map[string]func(CmdMessage)
+	Commands  map[string]*exec.Cmd
 }
 
 // CmdMessage structures command output
@@ -36,40 +38,66 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		Log:      log,
 		Messages: messages,
 		Handlers: make(map[string]func(cmsg CmdMessage), 0),
+		Commands: make(map[string]*exec.Cmd, 0),
 	}
+	
+	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
+		log.Error("GOT KILL")
+		os.Exit(1)
+	})
 
-	// 1 - check for the uap0 interface
+	cmdRunner.HandleFunc("wpa_supplicant", func(cmsg CmdMessage) {
+		if strings.Contains(cmsg.Message, "P2P: Update channel list") {
+			//ConnectWifi(cmdRunner)
+		}
+	})
+
+	// listen to hostapd and start dnsmasq
+	cmdRunner.HandleFunc("hostapd", func(cmsg CmdMessage) {
+		if strings.Contains(cmsg.Message, "uap0: AP-DISABLED") {
+			log.Error("CANNOT START AP")
+			os.Exit(1)
+		}
+		
+		if strings.Contains(cmsg.Message, "uap0: AP-ENABLED") {
+			log.Info("Hostapd enabeled.");
+			StartDnsmasq(cmdRunner)
+			//StartWpaSupplicant(cmdRunner)
+		}
+	})
+
+	// check for the uap0 interface
 	//
 	cmdRunner.HandleFunc("ifconfig_uap0", func(cmsg CmdMessage) {
 		var cmd *exec.Cmd
 		
 		if strings.Contains(cmsg.Message, "Device not found") {
-			// no uap so lets up it
+			// no uap so lets create it
 			log.Info("uap0 not found... starting one up.")
 			cmd = exec.Command("iw", "phy", "phy0", "interface", "add", "uap0", "type", "__ap");
 			go cmdRunner.ProcessCmd("iw_up_uap0", cmd)
 		}
 
 		if strings.Contains(cmsg.Message, "uap0      Link encap") {
+			
 			log.Info("uap0 is available")
+
+			// up uap0
 			cmd = exec.Command("ifconfig","uap0","up");
 			cmdRunner.ProcessCmd("uap_0_up", cmd)
 
+			// configure uap0
 			cmd = exec.Command("ifconfig","uap0","192.168.27.1")
 			cmdRunner.ProcessCmd("uap_0_configure", cmd)
+
+			StartHostapd(cmdRunner)
+
 		}
 	})
-
-
 	
 	go cmdRunner.ProcessCmd("ifconfig_uap0", exec.Command("ifconfig", "uap0"))
 
-	
-	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
-		log.Info("got kill")
-	})
-
-	
+	// staticFields for logger
 	staticFields := make(map[string]interface{})
 
 	// command output loop
@@ -97,6 +125,9 @@ func (c *CmdRunner) HandleFunc(cmdId string, handler func(cmdMessage CmdMessage)
 // ProcessCmd
 func (c *CmdRunner) ProcessCmd(id string, cmd *exec.Cmd) {
 	c.Log.Debug("ProcessCmd got %s", id);
+
+	// add command to the commands map TODO close the readers
+	c.Commands[id] = cmd
 	
 	cmdStdoutReader, err := cmd.StdoutPipe()
 	if err != nil {
