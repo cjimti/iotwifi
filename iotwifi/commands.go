@@ -49,7 +49,7 @@ func (c *Command) CheckApInterface() {
 // StartWpaSupplicant
 func (c *Command) StartWpaSupplicant() {
 	args := []string{
-		"-d",
+	//	"-d",
 		"-Dnl80211",
 		"-iwlan0",
 		"-c/etc/wpa_supplicant/wpa_supplicant.conf",

@@ -9,15 +9,16 @@ import (
 	"os/exec"
 	"strings"
 	"os"
+	"io"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
 
 // CmdRunner
 type CmdRunner struct {
-	Log      bunyan.Logger
-	Messages chan CmdMessage
-	Handlers map[string]func(CmdMessage)
+	Log       bunyan.Logger
+	Messages  chan CmdMessage
+	Handlers  map[string]func(CmdMessage)
 	Commands  map[string]*exec.Cmd	
 }
 
@@ -28,6 +29,7 @@ type CmdMessage struct {
 	Message string
 	Error   bool
 	Cmd     *exec.Cmd
+	Stdin   *io.WriteCloser
 }
 
 // RunWifi starts AP and Station
@@ -94,7 +96,7 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 			return
 		}
 
-		if strings.Contains(cmsg.Message, "uap0      Link encap") {
+		if strings.Contains(cmsg.Message, "Link encap") {
 			
 			log.Info("uap0 is available")
 			cmsg.Cmd.Wait()
@@ -108,6 +110,23 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 			// start hostapd
 			command.StartHostapd()
 		}
+	})
+
+	wpaSupplicantRunning := false
+	
+	// once wap_supplicant is likly running
+	//
+	cmdRunner.HandleFunc("wpa_supplicant", func(cmsg CmdMessage) {
+
+		// wap_supplican is reporting state, so it's up and running
+		if !wpaSupplicantRunning && strings.Contains(cmsg.Message, "Successfully initialized wpa_supplicant") {
+			// fire up wpa_cli so we can communicate with wap_supplicant
+			wpaSupplicantRunning = true
+			log.Info("WPA Supplicant is running.")
+				
+			//command.StartWpaCli()
+		}
+		
 	})
 
 	// remove AP interface (if there is one) and start fresh
