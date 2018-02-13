@@ -29,6 +29,35 @@ func NewWpaCfg(log bunyan.Logger) *WpaCfg {
 	}
 }
 
+func (wpa *WpaCfg) ConfiguredNetworks() string {
+	netOut, err := exec.Command("wpa_cli","-i","wlan0", "scan").Output()
+	if err != nil {
+		wpa.Log.Fatal(err)
+	}
+
+	return string(netOut)
+}
+
+
+func (wpa *WpaCfg) ConnectNetwork(ssid string, psk string) (status bool, err error) {
+
+	n := wpa.ConfiguredNetworks()
+	wpa.Log.Info("GOT: %s", n)
+	// add a network
+	//wpa_cli -i wlan0 add_networ
+
+	/*
+  ssid (network name, SSID)
+  psk (WPA passphrase or pre-shared key)
+  key_mgmt (key management protocol)
+  identity (EAP identity)
+  password (EAP password)
+*/
+	return true, nil
+}
+
+
+// ScanNetworks returns a map of WpaNetwork data structures
 func (wpa *WpaCfg) ScanNetworks() (map[string]WpaNetwork, error) {
 	wpaNetworks := make(map[string]WpaNetwork,0)
 		

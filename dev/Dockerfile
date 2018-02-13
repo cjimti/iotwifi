@@ -13,3 +13,4 @@ WORKDIR /go/src
 
 RUN go get github.com/bhoriuchi/go-bunyan/bunyan
 RUN go get github.com/ThomasRooney/gexpect
+RUN go get github.com/gorilla/mux
