@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"encoding/json"
+	"io/ioutil"
+	"strings"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 	"github.com/gorilla/mux"
@@ -38,10 +40,13 @@ func main() {
 
 	go iotwifi.RunWifi(blog, messages)
 
-	retError := func(w http.ResponseWriter, err error) {
+	wpacfg := iotwifi.NewWpaCfg(blog)
+
+	apiPayloadReturn := func(w http.ResponseWriter, message string, payload interface{}) {
 		apiReturn := &ApiReturn{
-			Status: "Faile",
-			Message: err.Error(),
+			Status: "OK",
+			Message: message,
+			Payload: payload,
 		}
 		ret, _ := json.Marshal(apiReturn)
 		
@@ -49,14 +54,86 @@ func main() {
 		w.Write(ret)		
 	}
 	
-	connectHandler := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+	// marshallPost populates a struct with json in post body
+	marshallPost := func(w http.ResponseWriter, r *http.Request, v interface{}) {
+		bytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			blog.Error(err)
+			return
+		}
+
+		defer r.Body.Close()
+
+		decoder := json.NewDecoder(strings.NewReader(string(bytes)))
+
+		err = decoder.Decode(&v)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			blog.Error(err)
+			return
+		}
 	}
 
+	// common error return from api
+	retError := func(w http.ResponseWriter, err error) {
+		apiReturn := &ApiReturn{
+			Status: "FAIL",
+			Message: err.Error(),
+		}
+		ret, _ := json.Marshal(apiReturn)
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(ret)		
+	}
+
+	// handle /status POSTs json in the form of iotwifi.WpaConnect
+	statusHandler := func(w http.ResponseWriter, r *http.Request) {
+
+		status, err := wpacfg.Status()
+		if err != nil {
+			//http.Error(w, err.Error(), http.StatusInternalServerError)
+			blog.Error(err.Error())
+			return
+		}
+
+		apiPayloadReturn(w, "status", status)
+	}
+
+	// handle /connect POSTs json in the form of iotwifi.WpaConnect
+	connectHandler := func(w http.ResponseWriter, r *http.Request) {
+		var creds iotwifi.WpaCredentials
+		marshallPost(w, r, &creds)
+
+		blog.Info("Connect Handler Got: ssid:|%s| psk:|%s|", creds.Ssid, creds.Psk)
+
+		connection, err := wpacfg.ConnectNetwork(creds)
+		if err != nil {
+			//http.Error(w, err.Error(), http.StatusInternalServerError)
+			blog.Error(err.Error())
+			return
+		}
+		
+		apiReturn := &ApiReturn{
+			Status: "OK",
+			Message: "Connection",
+			Payload: connection,
+		}
+		
+		ret, err := json.Marshal(apiReturn)
+		if err != nil {
+			retError(w, err)
+			return
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(ret)
+	}
+
+	// scan for wifi networks
 	scanHandler := func(w http.ResponseWriter, r *http.Request) {
 		blog.Info("Got Scan")
-		wpa := iotwifi.NewWpaCfg(blog)
-		wpaNetworks, err := wpa.ScanNetworks()
+		wpaNetworks, err := wpacfg.ScanNetworks()
 		if err != nil {
 			retError(w, err)
 			return
@@ -78,6 +155,7 @@ func main() {
 		w.Write(ret)
 	}
 
+	// kill the application
 	killHandler := func(w http.ResponseWriter, r *http.Request) {
 		messages <- iotwifi.CmdMessage{Id: "kill"}
 
@@ -95,6 +173,7 @@ func main() {
 		w.Write(ret)
 	}
 
+	// api headers for csx allowance
 	allowHeaders := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -106,6 +185,7 @@ func main() {
 		})
 	}
 
+	// common log middleware for api
 	logHandler := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			staticFields := make(map[string]interface{})
@@ -117,16 +197,20 @@ func main() {
 			next.ServeHTTP(w, r)
 		})
 	}
-	
+
+	// setup router and middleware
 	r := mux.NewRouter()
 	r.Use(allowHeaders)
 	r.Use(logHandler)
-	
+
+	// set app routes
+	r.HandleFunc("/status", statusHandler)
 	r.HandleFunc("/connect", connectHandler)
 	r.HandleFunc("/scan", scanHandler)
 	r.HandleFunc("/kill", killHandler)
 	http.Handle("/", r)
-	
+
+	// serve http
 	blog.Info("HTTP Listening on 8080")
 	http.ListenAndServe(":8080", nil)
 

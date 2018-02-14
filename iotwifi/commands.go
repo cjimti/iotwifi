@@ -28,7 +28,7 @@ func (c *Command) ConfigureApInterface() {
 
 // UpApInterface
 func (c *Command) UpApInterface() {
-	cmd := exec.Command("ifconfig","uap0","up");
+	cmd := exec.Command("ifconfig","uap0","up")
 	cmd.Start()
 	cmd.Wait()	
 }
@@ -63,6 +63,7 @@ func (c *Command) StartWpaSupplicant() {
 func (c *Command) StartDnsmasq() {
 	// hostapd is enabled, fire up dnsmasq
 	args := []string{
+//		"--interface=uap0",
 		"--no-hosts", // Don't read the hostnames in /etc/hosts.
 		"--keep-in-foreground",
 		"--log-queries",

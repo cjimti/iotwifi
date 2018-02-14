@@ -4,7 +4,10 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
+	"regexp"
+	"bytes"
+	"bufio"
+	
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
 
@@ -22,10 +25,91 @@ type WpaNetwork struct {
 	Ssid        string `json:"ssid"`
 }
 
+type WpaCredentials struct {
+	Ssid  string `json:"ssid"`
+	Psk   string `json:"psk"`
+}
+
+type WpaConnection struct {
+	Ssid    string `json:"ssid"`
+	State   string `json:"state"`
+	Ip      string `json:"ip"`
+	Message string `json:"message"`
+}
+
 func NewWpaCfg(log bunyan.Logger) *WpaCfg {
 
 	return &WpaCfg{
 		Log: log,
+	}
+}
+
+// status channel will get 1 if success and 0 if fail
+func (wpa *WpaCfg) StartAP() {
+	wpa.Log.Info("Starting Hostapd.")
+
+	command := &Command{
+		Log: wpa.Log,
+	}
+
+	command.RemoveApInterface()
+	command.AddApInterface()
+	command.UpApInterface()
+	command.ConfigureApInterface()
+	
+	cmd := exec.Command("hostapd", "-d", "/dev/stdin")
+
+	// pipes
+	hostapdPipe, _ := cmd.StdinPipe()
+	cmdStdoutReader, err := cmd.StdoutPipe()
+	if err != nil {
+		panic(err)
+	}
+	
+	messages := make(chan string, 1)
+
+	stdOutScanner := bufio.NewScanner(cmdStdoutReader)
+	go func() {
+		for stdOutScanner.Scan() {
+			wpa.Log.Info("GOT: %s", stdOutScanner.Text())
+			messages <- stdOutScanner.Text()
+		}
+	}()
+
+	cfg := `interface=uap0
+ssid=iotwifi2
+hw_mode=g
+channel=6
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=iotwifipass
+wpa_key_mgmt=WPA-PSK
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP`
+	
+	
+	hostapdPipe.Write([]byte(cfg))
+
+	cmd.Start()
+	hostapdPipe.Close()
+
+	
+	for {
+		out := <-messages // Block until we receive a message on the channel
+		if strings.Contains(out, "uap0: AP-DISABLED") {
+			wpa.Log.Info("Hostapd DISABLED")
+			//cmd.Process.Kill()
+			//cmd.Wait()
+
+			return
+			
+		}
+		if strings.Contains(out, "uap0: AP-ENABLED") {
+			wpa.Log.Info("Hostapd ENABLED")
+			return
+		}
 	}
 }
 
@@ -34,28 +118,124 @@ func (wpa *WpaCfg) ConfiguredNetworks() string {
 	if err != nil {
 		wpa.Log.Fatal(err)
 	}
-
+	
 	return string(netOut)
 }
 
+// ConnectNetwork connects to a wifi network
+func (wpa *WpaCfg) ConnectNetwork(creds WpaCredentials) (WpaConnection, error) {
+	connection := WpaConnection{}
+	
+	// 1. Add a network
+	addNetOut, err := exec.Command("wpa_cli","-i","wlan0", "add_network").Output()
+	if err != nil {
+		wpa.Log.Fatal(err)
+		return connection, err
+	}
+	net := strings.TrimSpace(string(addNetOut))
+	wpa.Log.Info("WPA add network got: %s", net)
+	
+	// 2. Set the ssid for the new network
+	addSsidOut, err :=exec.Command("wpa_cli", "-i", "wlan0", "set_network", net, "ssid", "\"" + creds.Ssid + "\"").Output()
+	if err != nil {
+		wpa.Log.Fatal(err)
+		return connection, err
+	}
+	ssidStatus := strings.TrimSpace(string(addSsidOut))	
+	wpa.Log.Info("WPA add ssid got: %s", ssidStatus)
 
-func (wpa *WpaCfg) ConnectNetwork(ssid string, psk string) (status bool, err error) {
+	// 3. Set the psk for the new network
+	addPskOut, err := exec.Command("wpa_cli", "-i", "wlan0", "set_network", net, "psk", "\"" + creds.Psk + "\"").Output()
+	if err != nil {
+		wpa.Log.Fatal(err.Error())
+		return connection, err
+	}
+	pskStatus := strings.TrimSpace(string(addPskOut))
+	wpa.Log.Info("WPA psk got: %s", pskStatus)
+	
+	// 4. Enable the new network
+	enableOut, err := exec.Command("wpa_cli", "-i", "wlan0", "enable_network", net).Output()
+	if err != nil {
+		wpa.Log.Fatal(err.Error())
+		return connection, err
+	}
+	enableStatus := strings.TrimSpace(string(enableOut))	
+	wpa.Log.Info("WPA enable got: %s", enableStatus)
 
-	n := wpa.ConfiguredNetworks()
-	wpa.Log.Info("GOT: %s", n)
-	// add a network
-	//wpa_cli -i wlan0 add_networ
+	// regex for state
+	rState := regexp.MustCompile("(?m)wpa_state=(.*)\n")
+	
+	// loop for status every second
+	for i := 0; i < 5; i++ {
+		wpa.Log.Info("WPA Checking wifi state")
 
-	/*
-  ssid (network name, SSID)
-  psk (WPA passphrase or pre-shared key)
-  key_mgmt (key management protocol)
-  identity (EAP identity)
-  password (EAP password)
-*/
-	return true, nil
+		stateOut, err :=exec.Command("wpa_cli", "-i", "wlan0", "status").Output()
+		if err != nil {
+			wpa.Log.Fatal("Got error checking state: %s", err.Error())
+			return connection, err
+		}
+		ms := rState.FindSubmatch(stateOut)
+
+		if len(ms) > 0 {
+			state := string(ms[1])
+			wpa.Log.Info("WPA Enable state: %s", state )
+			// see https://developer.android.com/reference/android/net/wifi/SupplicantState.html
+			if state == "COMPLETED" {
+				// save the config
+				saveOut, err := exec.Command("wpa_cli", "-i", "wlan0", "save_config").Output()
+				if err != nil {
+					wpa.Log.Fatal(err.Error())
+					return connection, err
+				}
+				saveStatus := strings.TrimSpace(string(saveOut))
+				wpa.Log.Info("WPA save got: %s", saveStatus)
+
+				connection.Ssid = creds.Ssid
+				connection.State = state
+				
+				return connection, nil
+			}
+		}
+
+		
+		time.Sleep(3 * time.Second)
+	}
+
+	connection.State = "FAIL"
+	connection.Message = "Unable to connection to " + creds.Ssid
+	return connection, nil
 }
 
+func (wpa *WpaCfg) Status() (map[string]string, error) {
+	cfgMap := make(map[string]string,0)
+	
+	stateOut, err :=exec.Command("wpa_cli", "-i", "wlan0", "status").Output()
+	if err != nil {
+		wpa.Log.Fatal("Got error checking state: %s", err.Error())
+		return cfgMap, err
+	}
+
+	cfgMap = cfgMapper(stateOut)
+	
+	return cfgMap, nil
+}
+
+// takes a byte array and splits by \n and then by =
+// put it all in a map
+func cfgMapper(data []byte) map[string]string {
+	cfgMap := make(map[string]string,0)
+	
+	lines := bytes.Split(data, []byte("\n"))
+
+	for _, line := range lines {
+		kv := bytes.Split(line, []byte("="))
+		if len(kv) > 1 {
+			cfgMap[string(kv[0])] = string(kv[1])			
+		}
+	}
+
+	return cfgMap
+}
 
 // ScanNetworks returns a map of WpaNetwork data structures
 func (wpa *WpaCfg) ScanNetworks() (map[string]WpaNetwork, error) {

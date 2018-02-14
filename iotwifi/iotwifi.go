@@ -10,6 +10,7 @@ import (
 	"strings"
 	"os"
 	"io"
+	"time"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
@@ -49,7 +50,6 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		Runner: cmdRunner,
 	}
 
-
 	// listen to kill messages
 	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
 		log.Error("GOT KILL")
@@ -64,6 +64,7 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	})
 
 	// listen to hostapd and start dnsmasq
+
 	cmdRunner.HandleFunc("hostapd", func(cmsg CmdMessage) {
 
 		if strings.Contains(cmsg.Message, "uap0: AP-DISABLED") {
@@ -130,19 +131,34 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	})
 
 	// remove AP interface (if there is one) and start fresh
-	command.RemoveApInterface()
-
-	// start wpa_supplicant (wifi client)
-	command.StartWpaSupplicant()
-
+	//command.RemoveApInterface()
+	
 	// start ap interface, chain of events for hostapd and dnsmasq starts here
-	command.CheckApInterface()
+	//command.CheckApInterface()
 
+	// up uap0
+	//command.UpApInterface()
+			
+	// configure uap0
+	//command.ConfigureApInterface()
+	
+	// start wpa_supplicant (wifi client)
+
+	wpacfg := NewWpaCfg(log)
+	wpacfg.StartAP()
+
+	time.Sleep(10 * time.Second)
+	
+	command.StartWpaSupplicant()
+	command.StartDnsmasq()
+
+
+	
 	// staticFields for logger
 	staticFields := make(map[string]interface{})
 
 	// command output loop (channel messages)
-	// loop, log and dispatch to handlers
+	// loop and log
 	//
 	for {
 		out := <-messages // Block until we receive a message on the channel
