@@ -7,7 +7,6 @@ package iotwifi
 import (
 	"bufio"
 	"os/exec"
-	"strings"
 	"os"
 	"io"
 	"time"
@@ -56,94 +55,6 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		os.Exit(1)
 	})
 
-	// listen to wpa_supplicant messages
-	cmdRunner.HandleFunc("wpa_supplicant", func(cmsg CmdMessage) {
-		if strings.Contains(cmsg.Message, "P2P: Update channel list") {
-			// @TODO scan networks
-		}
-	})
-
-	// listen to hostapd and start dnsmasq
-
-	cmdRunner.HandleFunc("hostapd", func(cmsg CmdMessage) {
-
-		if strings.Contains(cmsg.Message, "uap0: AP-DISABLED") {
-			log.Error("CANNOT START AP")
-			cmsg.Cmd.Process.Kill()
-			cmsg.Cmd.Wait()
-			os.Exit(3)
-		}
-		
-		if strings.Contains(cmsg.Message, "uap0: AP-ENABLED") {
-			log.Info("Hostapd enabeled.");
-			command.StartDnsmasq()
-		}
-	})
-
-	// check for the uap0 interface
-	//
-	cmdRunner.HandleFunc("ifconfig_uap0", func(cmsg CmdMessage) {
-		
-		if strings.Contains(cmsg.Message, "Device not found") {
-			// no uap so lets create it
-			log.Info("uap0 not found... starting one up.")
-			cmsg.Cmd.Wait()
-			
-			// add interface
-			command.AddApInterface()
-			
-			// re-check
-			command.CheckApInterface()
-			return
-		}
-
-		if strings.Contains(cmsg.Message, "Link encap") {
-			
-			log.Info("uap0 is available")
-			cmsg.Cmd.Wait()
-
-			// up uap0
-			command.UpApInterface()
-			
-			// configure uap0
-			command.ConfigureApInterface()
-
-			// start hostapd
-			command.StartHostapd()
-		}
-	})
-
-	wpaSupplicantRunning := false
-	
-	// once wap_supplicant is likly running
-	//
-	cmdRunner.HandleFunc("wpa_supplicant", func(cmsg CmdMessage) {
-
-		// wap_supplican is reporting state, so it's up and running
-		if !wpaSupplicantRunning && strings.Contains(cmsg.Message, "Successfully initialized wpa_supplicant") {
-			// fire up wpa_cli so we can communicate with wap_supplicant
-			wpaSupplicantRunning = true
-			log.Info("WPA Supplicant is running.")
-				
-			//command.StartWpaCli()
-		}
-		
-	})
-
-	// remove AP interface (if there is one) and start fresh
-	//command.RemoveApInterface()
-	
-	// start ap interface, chain of events for hostapd and dnsmasq starts here
-	//command.CheckApInterface()
-
-	// up uap0
-	//command.UpApInterface()
-			
-	// configure uap0
-	//command.ConfigureApInterface()
-	
-	// start wpa_supplicant (wifi client)
-
 	wpacfg := NewWpaCfg(log)
 	wpacfg.StartAP()
 
@@ -151,8 +62,6 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	
 	command.StartWpaSupplicant()
 	command.StartDnsmasq()
-
-
 	
 	// staticFields for logger
 	staticFields := make(map[string]interface{})
