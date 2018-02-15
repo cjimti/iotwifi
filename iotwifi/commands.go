@@ -7,9 +7,9 @@ import (
 )
 
 type SetupCfg struct {
-	DnsmasqCfg DnsmasqCfg `json:"dnsmasq_cfg"`
-	HostApdCfg HostApdCfg `json:"host_apd_cfg`
-	WpaSupplicantCfg WpaSupplicantCfg `json:"wpa_supplicant_cfg`
+	DnsmasqCfg       DnsmasqCfg       `json:"dnsmasq_cfg"`
+	HostApdCfg       HostApdCfg       `json:"host_apd_cfg"`
+	WpaSupplicantCfg WpaSupplicantCfg `json:"wpa_supplicant_cfg"`
 }
 
 type DnsmasqCfg struct {
@@ -38,28 +38,28 @@ type Command struct {
 
 // RemoveApInterface
 func (c *Command) RemoveApInterface() {
-	cmd := exec.Command("iw","dev","uap0","del")
+	cmd := exec.Command("iw", "dev", "uap0", "del")
 	cmd.Start()
 	cmd.Wait()
 }
 
 // ConfigureApInterface
 func (c *Command) ConfigureApInterface() {
-	cmd := exec.Command("ifconfig","uap0",c.SetupCfg.HostApdCfg.Ip)
+	cmd := exec.Command("ifconfig", "uap0", c.SetupCfg.HostApdCfg.Ip)
 	cmd.Start()
-	cmd.Wait()	
+	cmd.Wait()
 }
 
 // UpApInterface
 func (c *Command) UpApInterface() {
-	cmd := exec.Command("ifconfig","uap0","up")
+	cmd := exec.Command("ifconfig", "uap0", "up")
 	cmd.Start()
-	cmd.Wait()	
+	cmd.Wait()
 }
 
 // AddInterface
 func (c *Command) AddApInterface() {
-	cmd := exec.Command("iw", "phy", "phy0", "interface", "add", "uap0", "type", "__ap");
+	cmd := exec.Command("iw", "phy", "phy0", "interface", "add", "uap0", "type", "__ap")
 	cmd.Start()
 	cmd.Wait()
 }
@@ -73,12 +73,12 @@ func (c *Command) CheckApInterface() {
 // StartWpaSupplicant
 func (c *Command) StartWpaSupplicant() {
 	args := []string{
-	//	"-d",
+		"-d",
 		"-Dnl80211",
 		"-iwlan0",
 		"-c" + c.SetupCfg.WpaSupplicantCfg.CfgFile,
 	}
-	
+
 	cmd := exec.Command("wpa_supplicant", args...)
 	go c.Runner.ProcessCmd("wpa_supplicant", cmd)
 }
@@ -87,7 +87,6 @@ func (c *Command) StartWpaSupplicant() {
 func (c *Command) StartDnsmasq() {
 	// hostapd is enabled, fire up dnsmasq
 	args := []string{
-//		"--interface=uap0",
 		"--no-hosts", // Don't read the hostnames in /etc/hosts.
 		"--keep-in-foreground",
 		"--log-queries",
@@ -98,7 +97,7 @@ func (c *Command) StartDnsmasq() {
 		"--dhcp-authoritative",
 		"--log-facility=-",
 	}
-	
+
 	cmd := exec.Command("dnsmasq", args...)
 	go c.Runner.ProcessCmd("dnsmasq", cmd)
 }
@@ -106,12 +105,12 @@ func (c *Command) StartDnsmasq() {
 // StartHostapd
 func (c *Command) StartHostapd() {
 
-	c.Runner.Log.Info("Starting hostapd.");
-	
+	c.Runner.Log.Info("Starting hostapd.")
+
 	cmd := exec.Command("hostapd", "-d", "/dev/stdin")
 	hostapdPipe, _ := cmd.StdinPipe()
 	c.Runner.ProcessCmd("hostapd", cmd)
-	
+
 	cfg := `interface=uap0
 ssid=` + c.SetupCfg.HostApdCfg.Ssid + `
 hw_mode=g
@@ -124,8 +123,8 @@ wpa_passphrase=` + c.SetupCfg.HostApdCfg.WpaPassphrase + `
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP`
-	
+
 	hostapdPipe.Write([]byte(cfg))
 	hostapdPipe.Close()
-	
+
 }
