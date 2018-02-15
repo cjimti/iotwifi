@@ -38,6 +38,7 @@ func main() {
 	messages := make(chan iotwifi.CmdMessage, 1)
 
 	cfgUrl := setEnvIfEmpty("IOTWIFI_CFG", "cfg/wificfg.json")
+	port := setEnvIfEmpty("IOTWIFI_PORT", "8080")
 
 	go iotwifi.RunWifi(blog, messages, cfgUrl)
 	wpacfg := iotwifi.NewWpaCfg(blog, cfgUrl)
@@ -209,8 +210,8 @@ func main() {
 	http.Handle("/", r)
 
 	// serve http
-	blog.Info("HTTP Listening on 8080")
-	http.ListenAndServe(":8080", nil)
+	blog.Info("HTTP Listening on " + port)
+	http.ListenAndServe(":" + port, nil)
 
 }
 
