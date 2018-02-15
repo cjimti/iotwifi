@@ -6,22 +6,22 @@ package iotwifi
 
 import (
 	"bufio"
-	"os/exec"
-	"os"
-	"io"
-	"time"
-	"io/ioutil"
 	"encoding/json"
+	"io"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"time"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
 
 // CmdRunner
 type CmdRunner struct {
-	Log       bunyan.Logger
-	Messages  chan CmdMessage
-	Handlers  map[string]func(CmdMessage)
-	Commands  map[string]*exec.Cmd	
+	Log      bunyan.Logger
+	Messages chan CmdMessage
+	Handlers map[string]func(CmdMessage)
+	Commands map[string]*exec.Cmd
 }
 
 // CmdMessage structures command output
@@ -37,11 +37,11 @@ type CmdMessage struct {
 func loadCfg() (*SetupCfg, error) {
 	fileData, err := ioutil.ReadFile("./cfg/wificfg.json")
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	v := &SetupCfg{}
-	
+
 	err = json.Unmarshal(fileData, v)
 
 	return v, err
@@ -64,13 +64,13 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		log.Error("Could not load config: %s", err.Error())
 		return
 	}
-	
+
 	command := &Command{
-		Log: log,
-		Runner: cmdRunner,
+		Log:      log,
+		Runner:   cmdRunner,
 		SetupCfg: setupCfg,
 	}
-	
+
 	// listen to kill messages
 	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
 		log.Error("GOT KILL")
@@ -81,10 +81,10 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 	wpacfg.StartAP()
 
 	time.Sleep(10 * time.Second)
-	
+
 	command.StartWpaSupplicant()
 	command.StartDnsmasq()
-	
+
 	// staticFields for logger
 	staticFields := make(map[string]interface{})
 
@@ -113,11 +113,11 @@ func (c *CmdRunner) HandleFunc(cmdId string, handler func(cmdMessage CmdMessage)
 
 // ProcessCmd
 func (c *CmdRunner) ProcessCmd(id string, cmd *exec.Cmd) {
-	c.Log.Debug("ProcessCmd got %s", id);
+	c.Log.Debug("ProcessCmd got %s", id)
 
 	// add command to the commands map TODO close the readers
 	c.Commands[id] = cmd
-	
+
 	cmdStdoutReader, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)
@@ -153,9 +153,9 @@ func (c *CmdRunner) ProcessCmd(id string, cmd *exec.Cmd) {
 			}
 		}
 	}()
-	
+
 	err = cmd.Start()
-	
+
 	if err != nil {
 		panic(err)
 	}
