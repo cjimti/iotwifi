@@ -10,6 +10,8 @@ import (
 	"os"
 	"io"
 	"time"
+	"io/ioutil"
+	"encoding/json"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
@@ -32,6 +34,19 @@ type CmdMessage struct {
 	Stdin   *io.WriteCloser
 }
 
+func loadCfg() (*SetupCfg, error) {
+	fileData, err := ioutil.ReadFile("./cfg/wificfg.json")
+	if err != nil {
+		return nil, err
+	}
+
+	v := &SetupCfg{}
+	
+	err = json.Unmarshal(fileData, v)
+
+	return v, err
+}
+
 // RunWifi starts AP and Station
 func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 
@@ -44,11 +59,18 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		Commands: make(map[string]*exec.Cmd, 0),
 	}
 
+	setupCfg, err := loadCfg()
+	if err != nil {
+		log.Error("Could not load config: %s", err.Error())
+		return
+	}
+	
 	command := &Command{
 		Log: log,
 		Runner: cmdRunner,
+		SetupCfg: setupCfg,
 	}
-
+	
 	// listen to kill messages
 	cmdRunner.HandleFunc("kill", func(cmsg CmdMessage) {
 		log.Error("GOT KILL")
