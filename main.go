@@ -3,20 +3,20 @@
 package main
 
 import (
-	"net/http"
-	"os"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"strings"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
-	"github.com/gorilla/mux"
 	"github.com/cjimti/iotwifi/iotwifi"
+	"github.com/gorilla/mux"
 )
 
 type ApiReturn struct {
-	Status  string        `json:"status"`
-	Message string        `json:"message"`
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
 	Payload interface{} `json:"payload"`
 }
 
@@ -34,8 +34,7 @@ func main() {
 	}
 
 	blog.Info("Starting IoT Wifi...")
-	
-	
+
 	messages := make(chan iotwifi.CmdMessage, 1)
 
 	go iotwifi.RunWifi(blog, messages)
@@ -44,16 +43,16 @@ func main() {
 
 	apiPayloadReturn := func(w http.ResponseWriter, message string, payload interface{}) {
 		apiReturn := &ApiReturn{
-			Status: "OK",
+			Status:  "OK",
 			Message: message,
 			Payload: payload,
 		}
 		ret, _ := json.Marshal(apiReturn)
-		
+
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(ret)		
+		w.Write(ret)
 	}
-	
+
 	// marshallPost populates a struct with json in post body
 	marshallPost := func(w http.ResponseWriter, r *http.Request, v interface{}) {
 		bytes, err := ioutil.ReadAll(r.Body)
@@ -78,13 +77,13 @@ func main() {
 	// common error return from api
 	retError := func(w http.ResponseWriter, err error) {
 		apiReturn := &ApiReturn{
-			Status: "FAIL",
+			Status:  "FAIL",
 			Message: err.Error(),
 		}
 		ret, _ := json.Marshal(apiReturn)
-		
+
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(ret)		
+		w.Write(ret)
 	}
 
 	// handle /status POSTs json in the form of iotwifi.WpaConnect
@@ -113,19 +112,19 @@ func main() {
 			blog.Error(err.Error())
 			return
 		}
-		
+
 		apiReturn := &ApiReturn{
-			Status: "OK",
+			Status:  "OK",
 			Message: "Connection",
 			Payload: connection,
 		}
-		
+
 		ret, err := json.Marshal(apiReturn)
 		if err != nil {
 			retError(w, err)
 			return
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(ret)
 	}
@@ -140,17 +139,17 @@ func main() {
 		}
 
 		apiReturn := &ApiReturn{
-			Status: "OK",
+			Status:  "OK",
 			Message: "Networks",
 			Payload: wpaNetworks,
 		}
-		
+
 		ret, err := json.Marshal(apiReturn)
 		if err != nil {
 			retError(w, err)
 			return
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(ret)
 	}
@@ -160,7 +159,7 @@ func main() {
 		messages <- iotwifi.CmdMessage{Id: "kill"}
 
 		apiReturn := &ApiReturn{
-			Status: "OK",
+			Status:  "OK",
 			Message: "Killing service.",
 		}
 		ret, err := json.Marshal(apiReturn)
@@ -168,7 +167,7 @@ func main() {
 			retError(w, err)
 			return
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(ret)
 	}
