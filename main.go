@@ -37,9 +37,9 @@ func main() {
 
 	messages := make(chan iotwifi.CmdMessage, 1)
 
-	go iotwifi.RunWifi(blog, messages)
+	go iotwifi.RunWifi(blog, messages, "./cfg/wificfg.json")
 
-	wpacfg := iotwifi.NewWpaCfg(blog)
+	wpacfg := iotwifi.NewWpaCfg(blog, "./cfg/wificfg.json")
 
 	apiPayloadReturn := func(w http.ResponseWriter, message string, payload interface{}) {
 		apiReturn := &ApiReturn{

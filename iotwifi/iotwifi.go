@@ -34,8 +34,8 @@ type CmdMessage struct {
 	Stdin   *io.WriteCloser
 }
 
-func loadCfg() (*SetupCfg, error) {
-	fileData, err := ioutil.ReadFile("./cfg/wificfg.json")
+func loadCfg(cfgLocation string) (*SetupCfg, error) {
+	fileData, err := ioutil.ReadFile(cfgLocation)
 	if err != nil {
 		panic(err)
 	}
@@ -48,7 +48,7 @@ func loadCfg() (*SetupCfg, error) {
 }
 
 // RunWifi starts AP and Station
-func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
+func RunWifi(log bunyan.Logger, messages chan CmdMessage, cfgLocation string) {
 
 	log.Info("Loading IoT Wifi...")
 
@@ -59,7 +59,7 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		Commands: make(map[string]*exec.Cmd, 0),
 	}
 
-	setupCfg, err := loadCfg()
+	setupCfg, err := loadCfg(cfgLocation)
 	if err != nil {
 		log.Error("Could not load config: %s", err.Error())
 		return
@@ -77,13 +77,26 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage) {
 		os.Exit(1)
 	})
 
-	wpacfg := NewWpaCfg(log)
-	wpacfg.StartAP()
 
+	wpacfg := NewWpaCfg(log, cfgLocation)
+	wpacfg.StartAP()
+	
 	time.Sleep(10 * time.Second)
 
 	command.StartWpaSupplicant()
+
+	// Scan
+	time.Sleep(5 * time.Second)
+	wpacfg.ScanNetworks()
+
 	command.StartDnsmasq()
+
+	go func() {
+		for {
+			wpacfg.ScanNetworks()
+			time.Sleep(10 * time.Second)
+		}
+	}()
 
 	// staticFields for logger
 	staticFields := make(map[string]interface{})

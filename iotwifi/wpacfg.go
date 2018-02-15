@@ -15,6 +15,7 @@ import (
 type WpaCfg struct {
 	Log      bunyan.Logger
 	WpaCmd   []string
+	WpaCfg   *SetupCfg
 }
 
 type WpaNetwork struct {
@@ -37,10 +38,17 @@ type WpaConnection struct {
 	Message string `json:"message"`
 }
 
-func NewWpaCfg(log bunyan.Logger) *WpaCfg {
+func NewWpaCfg(log bunyan.Logger, cfgLocation string) *WpaCfg {
+
+	setupCfg, err := loadCfg(cfgLocation)
+	if err != nil {
+		log.Error("Could not load config: %s", err.Error())
+		panic(err)
+	}
 
 	return &WpaCfg{
 		Log: log,
+		WpaCfg: setupCfg,
 	}
 }
 
@@ -49,7 +57,8 @@ func (wpa *WpaCfg) StartAP() {
 	wpa.Log.Info("Starting Hostapd.")
 
 	command := &Command{
-		Log: wpa.Log,
+		Log:      wpa.Log,
+		SetupCfg: wpa.WpaCfg,
 	}
 
 	command.RemoveApInterface()
@@ -71,25 +80,25 @@ func (wpa *WpaCfg) StartAP() {
 	stdOutScanner := bufio.NewScanner(cmdStdoutReader)
 	go func() {
 		for stdOutScanner.Scan() {
-			wpa.Log.Info("GOT: %s", stdOutScanner.Text())
+			wpa.Log.Info("HOSTAPD GOT: %s", stdOutScanner.Text())
 			messages <- stdOutScanner.Text()
 		}
 	}()
 
 	cfg := `interface=uap0
-ssid=iotwifi2
+ssid=` + wpa.WpaCfg.HostApdCfg.Ssid + `
 hw_mode=g
-channel=6
+channel=` + wpa.WpaCfg.HostApdCfg.Channel + `
 macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase=iotwifipass
+wpa_passphrase=` + wpa.WpaCfg.HostApdCfg.WpaPassphrase + `
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP`
 	
-	
+	wpa.Log.Info("Hostapd CFG: %s", cfg)
 	hostapdPipe.Write([]byte(cfg))
 
 	cmd.Start()
