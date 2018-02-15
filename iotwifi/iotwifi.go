@@ -12,6 +12,8 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"net/http"
+	"regexp"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
@@ -35,14 +37,39 @@ type CmdMessage struct {
 }
 
 func loadCfg(cfgLocation string) (*SetupCfg, error) {
-	fileData, err := ioutil.ReadFile(cfgLocation)
-	if err != nil {
-		panic(err)
-	}
 
 	v := &SetupCfg{}
+	var jsonData []byte
 
-	err = json.Unmarshal(fileData, v)
+	urlDelimR, _ := regexp.Compile("://")	
+	isUrl := urlDelimR.Match([]byte(cfgLocation))
+	
+	// if not a url
+	if !isUrl {
+		fileData, err := ioutil.ReadFile(cfgLocation)
+		if err != nil {
+			panic(err)
+		}
+		jsonData = fileData
+	}
+
+	if isUrl {
+		res, err := http.Get(cfgLocation)
+		if err != nil {
+			panic(err)
+		}
+
+		defer res.Body.Close()
+
+		urlData, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		jsonData = urlData
+	}
+
+	err := json.Unmarshal(jsonData, v)
 
 	return v, err
 }

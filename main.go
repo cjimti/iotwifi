@@ -37,9 +37,10 @@ func main() {
 
 	messages := make(chan iotwifi.CmdMessage, 1)
 
-	go iotwifi.RunWifi(blog, messages, "./cfg/wificfg.json")
+	cfgUrl := setEnvIfEmpty("IOTWIFI_CFG", "cfg/wificfg.json")
 
-	wpacfg := iotwifi.NewWpaCfg(blog, "./cfg/wificfg.json")
+	go iotwifi.RunWifi(blog, messages, cfgUrl)
+	wpacfg := iotwifi.NewWpaCfg(blog, cfgUrl)
 
 	apiPayloadReturn := func(w http.ResponseWriter, message string, payload interface{}) {
 		apiReturn := &ApiReturn{
@@ -91,7 +92,6 @@ func main() {
 
 		status, err := wpacfg.Status()
 		if err != nil {
-			//http.Error(w, err.Error(), http.StatusInternalServerError)
 			blog.Error(err.Error())
 			return
 		}
@@ -108,7 +108,6 @@ func main() {
 
 		connection, err := wpacfg.ConnectNetwork(creds)
 		if err != nil {
-			//http.Error(w, err.Error(), http.StatusInternalServerError)
 			blog.Error(err.Error())
 			return
 		}
@@ -213,4 +212,24 @@ func main() {
 	blog.Info("HTTP Listening on 8080")
 	http.ListenAndServe(":8080", nil)
 
+}
+
+// getEnv gets an environment variable or sets a default if
+// one does not exist.
+func getEnv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+
+	return value
+}
+
+// setEnvIfEmp<ty sets an environment variable to itself or
+// fallback if empty.
+func setEnvIfEmpty(env string, fallback string) (envVal string) {
+	envVal = getEnv(env, fallback)
+	os.Setenv(env, envVal)
+
+	return envVal
 }
