@@ -1,4 +1,4 @@
-IMAGE    ?= cjimti/iotwifi:armhf-1.0.1
+IMAGE    ?= cjimti/iotwifi
 NAME     ?= iotwifi
 
 all: build push
