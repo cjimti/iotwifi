@@ -200,7 +200,7 @@ func main() {
 
 	// CORS
 	headersOk := handlers.AllowedHeaders([]string{"Content-Type","Authorization","Content-Length","X-Requested-With","Accept","Origin"})
-	originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS","DELETE"})
 	
 	// serve http
