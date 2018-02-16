@@ -12,6 +12,7 @@ import (
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 	"github.com/cjimti/iotwifi/iotwifi"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/handlers"
 )
 
 type ApiReturn struct {
@@ -201,6 +202,7 @@ func main() {
 	r := mux.NewRouter()
 	r.Use(allowHeaders)
 	r.Use(logHandler)
+	
 
 	// set app routes
 	r.HandleFunc("/status", statusHandler)
@@ -211,7 +213,7 @@ func main() {
 
 	// serve http
 	blog.Info("HTTP Listening on " + port)
-	http.ListenAndServe(":" + port, nil)
+	http.ListenAndServe(":" + port, handlers.CORS()(r))
 
 }
 

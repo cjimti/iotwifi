@@ -5,6 +5,7 @@ WORKDIR /go/src
 
 RUN go get github.com/bhoriuchi/go-bunyan/bunyan
 RUN go get github.com/gorilla/mux
+RUN go get github.com/gorilla/handlers
 
 RUN mkdir -p /go/src/github.com/cjimti/iotwifi
 COPY . /go/src/github.com/cjimti/iotwifi
