@@ -173,18 +173,6 @@ func main() {
 		w.Write(ret)
 	}
 
-	// api headers for csx allowance
-	allowHeaders := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Length, X-Requested-With, Accept, Origin")
-			w.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
-
-			next.ServeHTTP(w, r)
-		})
-	}
-
 	// common log middleware for api
 	logHandler := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -200,20 +188,24 @@ func main() {
 
 	// setup router and middleware
 	r := mux.NewRouter()
-	r.Use(allowHeaders)
 	r.Use(logHandler)
 	
 
 	// set app routes
 	r.HandleFunc("/status", statusHandler)
-	r.HandleFunc("/connect", connectHandler)
+	r.HandleFunc("/connect", connectHandler).Methods("POST")
 	r.HandleFunc("/scan", scanHandler)
 	r.HandleFunc("/kill", killHandler)
 	http.Handle("/", r)
 
+	// CORS
+	headersOk := handlers.AllowedHeaders([]string{"Content-Type","Authorization","Content-Length","X-Requested-With","Accept","Origin"})
+	originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS","DELETE"})
+	
 	// serve http
 	blog.Info("HTTP Listening on " + port)
-	http.ListenAndServe(":" + port, handlers.CORS()(r))
+	http.ListenAndServe(":" + port, handlers.CORS(originsOk,headersOk,methodsOk)(r))
 
 }
 
