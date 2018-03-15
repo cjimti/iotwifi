@@ -12,6 +12,7 @@ import (
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 	"github.com/cjimti/iotwifi/iotwifi"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/handlers"
 )
 
 type ApiReturn struct {
@@ -37,9 +38,11 @@ func main() {
 
 	messages := make(chan iotwifi.CmdMessage, 1)
 
-	go iotwifi.RunWifi(blog, messages)
+	cfgUrl := setEnvIfEmpty("IOTWIFI_CFG", "cfg/wificfg.json")
+	port := setEnvIfEmpty("IOTWIFI_PORT", "8080")
 
-	wpacfg := iotwifi.NewWpaCfg(blog)
+	go iotwifi.RunWifi(blog, messages, cfgUrl)
+	wpacfg := iotwifi.NewWpaCfg(blog, cfgUrl)
 
 	apiPayloadReturn := func(w http.ResponseWriter, message string, payload interface{}) {
 		apiReturn := &ApiReturn{
@@ -91,7 +94,6 @@ func main() {
 
 		status, err := wpacfg.Status()
 		if err != nil {
-			//http.Error(w, err.Error(), http.StatusInternalServerError)
 			blog.Error(err.Error())
 			return
 		}
@@ -108,7 +110,6 @@ func main() {
 
 		connection, err := wpacfg.ConnectNetwork(creds)
 		if err != nil {
-			//http.Error(w, err.Error(), http.StatusInternalServerError)
 			blog.Error(err.Error())
 			return
 		}
@@ -172,18 +173,6 @@ func main() {
 		w.Write(ret)
 	}
 
-	// api headers for csx allowance
-	allowHeaders := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Length, X-Requested-With, Accept, Origin")
-			w.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
-
-			next.ServeHTTP(w, r)
-		})
-	}
-
 	// common log middleware for api
 	logHandler := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -199,18 +188,43 @@ func main() {
 
 	// setup router and middleware
 	r := mux.NewRouter()
-	r.Use(allowHeaders)
 	r.Use(logHandler)
+	
 
 	// set app routes
 	r.HandleFunc("/status", statusHandler)
-	r.HandleFunc("/connect", connectHandler)
+	r.HandleFunc("/connect", connectHandler).Methods("POST")
 	r.HandleFunc("/scan", scanHandler)
 	r.HandleFunc("/kill", killHandler)
 	http.Handle("/", r)
 
+	// CORS
+	headersOk := handlers.AllowedHeaders([]string{"Content-Type","Authorization","Content-Length","X-Requested-With","Accept","Origin"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS","DELETE"})
+	
 	// serve http
-	blog.Info("HTTP Listening on 8080")
-	http.ListenAndServe(":8080", nil)
+	blog.Info("HTTP Listening on " + port)
+	http.ListenAndServe(":" + port, handlers.CORS(originsOk,headersOk,methodsOk)(r))
 
+}
+
+// getEnv gets an environment variable or sets a default if
+// one does not exist.
+func getEnv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+
+	return value
+}
+
+// setEnvIfEmp<ty sets an environment variable to itself or
+// fallback if empty.
+func setEnvIfEmpty(env string, fallback string) (envVal string) {
+	envVal = getEnv(env, fallback)
+	os.Setenv(env, envVal)
+
+	return envVal
 }

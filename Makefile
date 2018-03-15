@@ -1,7 +1,15 @@
-IMAGE    ?= iotwifi
+IMAGE    ?= cjimti/iotwifi
 NAME     ?= iotwifi
 
+all: build push
+
 dev: dev_build dev_run
+
+build:
+	docker build -t $(IMAGE) .
+
+push:
+	docker push $(IMAGE)
 
 dev_build:
 	docker build -t $(IMAGE) ./dev/
