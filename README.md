@@ -1,5 +1,7 @@
 # IOT Wifi (Raspberry Pi AP + Client)
 
+![Raspberry Pi AP + Client](/doc_assets/pi.jpg)
+
 TL;DR? If you are not interested in reading all this you can skip ahead to
 [Getting Started](#getting-started).
 
