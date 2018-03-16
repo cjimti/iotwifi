@@ -214,8 +214,8 @@ uap0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 
-The standard wifi interface **wlan0** should be up but no yet
-configured since we are not yet connected to an external access point.
+The standard wifi interface **wlan0** should be up unconfigured 
+since we are not yet connected to an external access point.
 
 ```plain
 wlan0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
