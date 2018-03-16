@@ -1,0 +1,4 @@
+theme: jekyll-theme-cayman
+title: Raspberry Pi Wifi (Station + AP modes)
+description: A wifi configuration managment container for Raspberry Pi.
+google_analytics: UA-78786435-3
