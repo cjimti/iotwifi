@@ -28,14 +28,14 @@ intended to run in a [Docker] container on a Raspberry Pi.
 IOT Wifi sets up network interfaces, runs [hostapd], [wpa_supplicant] and
 [dnsmasq] to run simultaneously. This allows a user (or another service) to
 connect to the Raspberry Pi via [hostapd]/[dnsmasq] and issue commands that
-configure and connect [wpa_supplicant] to another AP. IOT Wifi then exposes
+configure and connect [wpa_supplicant] to another [AP]. IOT Wifi then exposes
 a small web server on the Pi and offers a JSON based REST API to configure Wifi.
 This allows you to build a custom [Captive Portal] web page or even
 programmatically connect from another device and use the exposed API to
 configure the target device.
 
 Using wifi to configure a wifi connection is a common requirement for [IOT].
-As Raspberry Pis are becoming a popular choice as an [IOT] platform, helps
+As Raspberry Pis are becoming a popular choice as an [IOT] platform, this helps
 solve the common requirement to manage AP and Station modes.
 
 ## Background
@@ -232,6 +232,8 @@ On your laptop or phone you should not see a Wifi Network named **iot-wifi-cfg-3
 assuming you did not change it from the default. The default password for this
 network is **iotwifipass**. Once connected to this network you should get
 an IP address assigned in the range specified in the config: `192.168.27.100,192.168.27.150,1h`.
+
+![Coeect Phone](/doc_assets/phone.jpg)
 
 Once connected open a web browser and go to http://192.168.27.1:8080/status. You
 Can access this APi enpoint on the Raspberry Pi device itself from `localhost`*.
