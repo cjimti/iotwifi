@@ -16,9 +16,9 @@
 
 * **If the current behavior is a bug, please provide the steps to reproduce and if possible a minimal demo of the problem** 
 
-  1.
-  1.
-  1.
+1.
+1.
+1.
 
 
 * **What is the expected behavior?**
