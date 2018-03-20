@@ -18,6 +18,7 @@ type WpaCfg struct {
 	WpaCfg *SetupCfg
 }
 
+// WpaNetwork defines a wifi network to connect to.
 type WpaNetwork struct {
 	Bssid       string `json:"bssid"`
 	Frequency   string `json:"frequency"`
@@ -26,11 +27,13 @@ type WpaNetwork struct {
 	Ssid        string `json:"ssid"`
 }
 
+// WpaCredentials defines wifi network credentials.
 type WpaCredentials struct {
 	Ssid string `json:"ssid"`
 	Psk  string `json:"psk"`
 }
 
+// WpaConnection defines a WPA connection.
 type WpaConnection struct {
 	Ssid    string `json:"ssid"`
 	State   string `json:"state"`
@@ -38,6 +41,7 @@ type WpaConnection struct {
 	Message string `json:"message"`
 }
 
+// NewWpaCfg produces WpaCfg configuration types.
 func NewWpaCfg(log bunyan.Logger, cfgLocation string) *WpaCfg {
 
 	setupCfg, err := loadCfg(cfgLocation)
@@ -52,7 +56,7 @@ func NewWpaCfg(log bunyan.Logger, cfgLocation string) *WpaCfg {
 	}
 }
 
-// status channel will get 1 if success and 0 if fail
+// StartAP starts AP mode.
 func (wpa *WpaCfg) StartAP() {
 	wpa.Log.Info("Starting Hostapd.")
 
@@ -121,6 +125,7 @@ rsn_pairwise=CCMP`
 	}
 }
 
+// ConfiguredNetworks returns a list of configured wifi networks.
 func (wpa *WpaCfg) ConfiguredNetworks() string {
 	netOut, err := exec.Command("wpa_cli", "-i", "wlan0", "scan").Output()
 	if err != nil {
@@ -227,8 +232,7 @@ func (wpa *WpaCfg) Status() (map[string]string, error) {
 	return cfgMap, nil
 }
 
-// takes a byte array and splits by \n and then by =
-// put it all in a map
+// cfgMapper takes a byte array and splits by \n and then by = and puts it all in a map.
 func cfgMapper(data []byte) map[string]string {
 	cfgMap := make(map[string]string, 0)
 
@@ -244,7 +248,7 @@ func cfgMapper(data []byte) map[string]string {
 	return cfgMap
 }
 
-// ScanNetworks returns a map of WpaNetwork data structures
+// ScanNetworks returns a map of WpaNetwork data structures.
 func (wpa *WpaCfg) ScanNetworks() (map[string]WpaNetwork, error) {
 	wpaNetworks := make(map[string]WpaNetwork, 0)
 

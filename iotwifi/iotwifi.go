@@ -18,7 +18,7 @@ import (
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
 
-// CmdRunner
+// CmdRunner runs internal commands allows output handlers to be attached.
 type CmdRunner struct {
 	Log      bunyan.Logger
 	Messages chan CmdMessage
@@ -26,7 +26,7 @@ type CmdRunner struct {
 	Commands map[string]*exec.Cmd
 }
 
-// CmdMessage structures command output
+// CmdMessage structures command output.
 type CmdMessage struct {
 	Id      string
 	Command string
@@ -36,6 +36,7 @@ type CmdMessage struct {
 	Stdin   *io.WriteCloser
 }
 
+// loadCfg loads the configuration.
 func loadCfg(cfgLocation string) (*SetupCfg, error) {
 
 	v := &SetupCfg{}
@@ -74,7 +75,7 @@ func loadCfg(cfgLocation string) (*SetupCfg, error) {
 	return v, err
 }
 
-// RunWifi starts AP and Station
+// RunWifi starts AP and Station modes.
 func RunWifi(log bunyan.Logger, messages chan CmdMessage, cfgLocation string) {
 
 	log.Info("Loading IoT Wifi...")
@@ -150,7 +151,7 @@ func (c *CmdRunner) HandleFunc(cmdId string, handler func(cmdMessage CmdMessage)
 	c.Handlers[cmdId] = handler
 }
 
-// ProcessCmd
+// ProcessCmd processes an internal command.
 func (c *CmdRunner) ProcessCmd(id string, cmd *exec.Cmd) {
 	c.Log.Debug("ProcessCmd got %s", id)
 
