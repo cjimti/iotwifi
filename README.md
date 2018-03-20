@@ -1,5 +1,19 @@
 # IOT Wifi (Raspberry Pi AP + Client)
 
+IOT Wifi is very small/8MB Docker Container built for the Raspberry Pi 3.
+IOT Wifi exposes a simple JSON based REST API for controlling the wireless network
+interface. This allows the Raspberry Pi accept wifi connections as an
+access point (aka AP) and at the same time connect to an existing wifi network (station mode).
+
+The main application code is written in Go (golang) in order to produce a very small
+docker image with great performance. The container runs [Alipne Linux](https://alpinelinux.org/)
+with small, optimized versions of [hostapd], [wpa_supplicant] and [dnsmasq]
+add controlled by the API endpoints.
+
+If you have a Raspberry Pi 3 and you want to provide a based wifi
+configuration abilities, all you need is docker and a little over 8MB of free
+drive space.
+
 ![Raspberry Pi AP + Client](/doc_assets/pi.jpg)
 
 Table of Contents
