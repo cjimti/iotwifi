@@ -37,7 +37,7 @@ TL;DR? If you are not interested in reading all this you can skip ahead to
 [Getting Started](#getting-started).
 
 IOT Wifi is a [Raspberry Pi] wifi management REST service written in [Go] and
-intended to run in a [Docker] container on a Raspberry Pi.
+intended to run in a [Docker container on a Raspberry Pi](https://hub.docker.com/r/cjimti/iotwifi/).
 
 IOT Wifi sets up network interfaces, runs [hostapd], [wpa_supplicant] and
 [dnsmasq] to run simultaneously. This allows a user (or another service) to
@@ -228,8 +228,8 @@ uap0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 
-The standard wifi interface **wlan0** should be up but no yet
-configured since we are not yet connected to an external access point.
+The standard wifi interface **wlan0** should be up unconfigured 
+since we are not yet connected to an external access point.
 
 ```plain
 wlan0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
