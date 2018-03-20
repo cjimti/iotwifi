@@ -1,5 +1,11 @@
 # IOT Wifi (Raspberry Pi AP + Client)
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/cjimti/iotwifi)](https://goreportcard.com/report/github.com/cjimti/iotwifi)
+[![GoDoc](https://godoc.org/github.com/cjimti/iotwifi/iotwifi?status.svg)](https://godoc.org/github.com/cjimti/iotwifi/iotwifi)
+[![Docker Container Image Size](https://shields.beevelop.com/docker/image/image-size/cjimti/iotwifi/latest.svg)](https://hub.docker.com/r/cjimti/iotwifi/)
+[![Docker Container Layers](https://shields.beevelop.com/docker/image/layers/cjimti/iotwifi/latest.svg)](https://hub.docker.com/r/cjimti/iotwifi/)
+
+
 IOT Wifi is very small/8MB Docker Container built for the Raspberry Pi 3.
 IOT Wifi exposes a simple JSON based REST API for controlling the wireless network
 interface. This allows the Raspberry Pi accept wifi connections as an
