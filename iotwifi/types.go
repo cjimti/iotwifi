@@ -22,4 +22,3 @@ type HostApdCfg struct {
 type WpaSupplicantCfg struct {
 	CfgFile string `json:"cfg_file"` // /etc/wpa_supplicant/wpa_supplicant.conf
 }
-

@@ -9,11 +9,11 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
-	"time"
-	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/bhoriuchi/go-bunyan/bunyan"
 )
@@ -41,9 +41,9 @@ func loadCfg(cfgLocation string) (*SetupCfg, error) {
 	v := &SetupCfg{}
 	var jsonData []byte
 
-	urlDelimR, _ := regexp.Compile("://")	
+	urlDelimR, _ := regexp.Compile("://")
 	isUrl := urlDelimR.Match([]byte(cfgLocation))
-	
+
 	// if not a url
 	if !isUrl {
 		fileData, err := ioutil.ReadFile(cfgLocation)
@@ -104,10 +104,9 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage, cfgLocation string) {
 		os.Exit(1)
 	})
 
-
 	wpacfg := NewWpaCfg(log, cfgLocation)
 	wpacfg.StartAP()
-	
+
 	time.Sleep(10 * time.Second)
 
 	command.StartWpaSupplicant()
