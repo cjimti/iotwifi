@@ -195,7 +195,12 @@ needs to run in a **privileged mode** and have access to the **host network** (t
 Raspberry Pi device) in order to configure and manage the network interfaces on
 the the Raspberry Pi. We will also need to mount the configuration file.
 
-We will run it in the foreground to observe the startup process.
+We will run it in the foreground to observe the startup process. If you want
+it to run the the packground you need to remove the `--rm` and pass a the `-d`
+flag. If you want to it restart on reboot or failure you can pass the flag
+`--restart=unless-stopped`. 
+
+[Read more on the `docker run` command.](https://docs.docker.com/engine/reference/run/)
 
 ```bash
 $ docker run --rm --privileged --net host \
@@ -205,7 +210,7 @@ $ docker run --rm --privileged --net host \
 
 The IOT Wifi container outputs logs in the JSON format. While this makes
 them a bit more difficult to read, we can feed them directly (or indirectly)
-into tools like Elastic Search or other databases for further processing.
+into tools like Elastic Search or other databases for alerting or analytics.
 
 You should see some initial JSON objects with messages like `Starting IoT Wifi...`:
 
@@ -234,8 +239,8 @@ uap0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 
-The standard wifi interface **wlan0** should be up unconfigured 
-since we are not yet connected to an external access point.
+The standard wifi interface **wlan0** should be available, yet unconfigured 
+since we are not yet connected to an external wifi network (access point).
 
 ```plain
 wlan0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
@@ -248,7 +253,7 @@ wlan0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
 
 ### Connect to the Pi over Wifi
 
-On your laptop or phone you should not see a Wifi Network named **iot-wifi-cfg-3**
+On your laptop or phone you should now see a Wifi Network named **iot-wifi-cfg-3**
 assuming you did not change it from the default. The default password for this
 network is **iotwifipass**. Once connected to this network you should get
 an IP address assigned in the range specified in the config: `192.168.27.100,192.168.27.150,1h`.
@@ -265,7 +270,7 @@ You should receive a JSON message similar to the following:
 {"status":"OK","message":"status","payload":{"address":"b8:27:eb:fe:c8:ab","uuid":"a736659a-ae85-5e03-9754-dd808ea0d7f2","wpa_state":"INACTIVE"}}
 ```
 
-From now on I'll demonstrate API calls to the new container with curl on the
+From now on I'll demonstrate API calls to the new container with the [`curl` command](https://en.wikipedia.org/wiki/CURL) on the
 device. If you were developing a Captive Portal or configuration web page you
 could translate these calls into Javascript and control the device Wifi with AJAX.
 
