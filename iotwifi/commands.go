@@ -34,7 +34,7 @@ func (c *Command) UpApInterface() {
 	cmd.Wait()
 }
 
-// AddInterface adds the AP interface.
+// AddApInterface adds the AP interface.
 func (c *Command) AddApInterface() {
 	cmd := exec.Command("iw", "phy", "phy0", "interface", "add", "uap0", "type", "__ap")
 	cmd.Start()

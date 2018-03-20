@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// ApiReturn structures a message for returned API calls.
 type ApiReturn struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`

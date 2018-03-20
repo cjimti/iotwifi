@@ -218,6 +218,7 @@ func (wpa *WpaCfg) ConnectNetwork(creds WpaCredentials) (WpaConnection, error) {
 	return connection, nil
 }
 
+// Status returns the WPA wireless status.
 func (wpa *WpaCfg) Status() (map[string]string, error) {
 	cfgMap := make(map[string]string, 0)
 
