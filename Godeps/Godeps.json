@@ -1,0 +1,21 @@
+{
+	"ImportPath": "github.com/cjimti/iotwifi",
+	"GoVersion": "go1.9",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/bhoriuchi/go-bunyan/bunyan",
+			"Rev": "8815b5fdce8c649679da0123c957d4b5e4b6f8ca"
+		},
+		{
+			"ImportPath": "github.com/gorilla/handlers",
+			"Comment": "v1.3.0",
+			"Rev": "90663712d74cb411cbef281bc1e08c19d1a76145"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Comment": "v1.6.1-13-g4dbd923",
+			"Rev": "4dbd923b0c9e99ff63ad54b0e9705ff92d3cdb06"
+		}
+	]
+}
