@@ -7,18 +7,11 @@
 [![Docker Container Pulls](https://img.shields.io/docker/pulls/cjimti/iotwifi.svg)](https://hub.docker.com/r/cjimti/iotwifi/)
 
 IOT Wifi is very small/8MB Docker Container built for the Raspberry Pi 3.
-IOT Wifi exposes a simple JSON based REST API for controlling the wireless network
-interface. This allows the Raspberry Pi accept wifi connections as an
-access point (aka AP) while at the same time connecting to an existing wifi network (station mode).
+IOT Wifi exposes a simple JSON based REST API for controlling the wireless network interface. This container allows the Raspberry Pi accept wifi connections as an access point (aka AP) while at the same time connecting to an existing wifi network (station mode).
 
-The main application code is written in Go (golang) in order to produce a very small
-docker image with great performance. The container runs [Alpine Linux](https://alpinelinux.org/)
-with small, optimized versions of [hostapd], [wpa_supplicant] and [dnsmasq],
-controlled by the container's API endpoints.
+Go (Golang) was used to develop the main application code, to produce a minimal docker image with great performance. The container runs [Alpine Linux](https://alpinelinux.org/) with small, optimized versions of [hostapd], [wpa_supplicant] and [dnsmasq], controlled by the container's API endpoints.
 
-If you have a Raspberry Pi 3 and you want to provide wifi based
-configuration abilities, all you need is Docker installed and a little over 8MB of free
-drive space.
+If you have a Raspberry Pi 3 and you want to provide wifi based configuration abilities, all you need is Docker installed and a little over 8MB of free drive space.
 
 ![Raspberry Pi AP + Client](/doc_assets/pi.jpg)
 
@@ -39,35 +32,22 @@ Table of Contents
          * [Conclusion](#conclusion)
 
 
-TL;DR? If you are not interested in reading all this you can skip ahead to
+TL;DR? If you are not interested in reading all this, you can skip ahead to
 [Getting Started](#getting-started).
 
 IOT Wifi is a [Raspberry Pi] wifi management REST service written in [Go] and
 intended to run in a [Docker container on a Raspberry Pi](https://hub.docker.com/r/cjimti/iotwifi/).
 
 IOT Wifi sets up network interfaces, runs [hostapd], [wpa_supplicant] and
-[dnsmasq] to run simultaneously. This allows a user (or another service) to
-connect to the Raspberry Pi via [hostapd]/[dnsmasq] and issue commands that
-configure and connect [wpa_supplicant] to another [AP]. IOT Wifi then exposes
-a small web server on the Pi and offers a JSON based REST API to configure Wifi.
-This allows you to build a custom [Captive Portal] web page or even
-programmatically connect from another device and use the exposed API to
-configure the target device.
+[dnsmasq] to run simultaneously,  allowing a user (or another service) to connect to the Raspberry Pi via [hostapd]/[dnsmasq] and issue commands that configure and connect [wpa_supplicant] to another [AP]. IOT Wifi then exposes a small web server on the Pi and offers a JSON based REST API to configure Wifi. The IOT Wifi container allows you to build a custom [Captive Portal] web page or even programmatically connect from another device and use the exposed API to configure the target device.
 
-Using wifi to configure a wifi connection is a common requirement for [IOT].
-As Raspberry Pis are becoming a popular choice as an [IOT] platform, this helps
-solve the common requirement to manage AP and Station modes.
+Using wifi to configure a wifi connection is often a standard requirement for [IOT]. As Raspberry Pis are becoming a popular choice as an [IOT] platform, this helps solve the frequent need to manage AP and Station modes.
 
 ## Background
 
-Over a year ago I wrote a blog post called [RASPBERRY PI 3 - WIFI STATION+AP]
-with my notes on setting up a **Raspberry Pi 3** to run as a [Wifi Access Point][AP] (Hostspot)
-and a [Wifi Client (aka Wifi Station)][Station] simultaneously. This old blog post gets
-a considerable amount of traffic, so it seems there is quite a bit of interest in
-this. I have come to realize that some of the steps in my old post have changed
-since newer versions of [Raspian] (n00bs build) have been released.
+Over a year ago I wrote a blog post called [RASPBERRY PI 3 - WIFI STATION+AP] with my notes on setting up a **Raspberry Pi 3** to run as a [Wifi Access Point][AP] (Hotspot) and a [Wifi Client (aka Wifi Station)][Station] simultaneously. This old blog post gets a considerable amount of traffic, so it seems there is quite a bit of interest in this. I have come to realize that some of the steps in my old post have changed since newer versions of [Raspian] (n00bs build) are released.
 
-Since writing the post I have had a few personal and professional projects
+Since writing the post, I have had a few personal and professional projects
 requiring a Raspberry Pi to allow wifi setup **over wifi**. I decided to open
 source this simple project to help others with similar requirements as well
 as gain some feedback on where and how I can improve it. I would welcome
@@ -81,7 +61,7 @@ can use the [Noobs] release to install the latest version of Raspian.
 ### Disable wpa_supplicant on Raspberry Pi
 
 You do not want the default **[wpa_supplicant]** (the software that communicates
-with the wifi driver and connects to Wifi networks) running and competing
+with the wifi driver and connects to Wifi networks,) running and competing
 with the **IOT Wifi** container.
 
 ```bash
@@ -111,7 +91,7 @@ $ sudo usermod -aG docker pi
 
 ![Usermod Docker](/doc_assets/usermod.gif)
 
-Reboot the pi and test Docker.
+Reboot the Pi and test Docker.
 
 ```bash
 $ sudo reboot
@@ -130,12 +110,12 @@ $ docker run --rm hello-world
 
 ### Pull the IOT Wifi Docker Image
 
-You can optionally clone and build the entire project, however to get
-started quickly I'll show you how to use a pre-build Docker Image. At
+You can optionally clone and build the entire project, however, to get
+started quickly I'll show you how to use a pre-built Docker Image. At
 only 16MB this little image contains everything you need. The image
 is based on [Alpine Linux] and contains [hostapd], [wpa_supplicant] and
 [dnsmasq], along with a compiled wifi management utility written in go,
-the souce is found in this repository: https://github.com/cjimti/iotwifi.
+the source is found in this repository: https://github.com/cjimti/iotwifi.
 
 ```bash
 # Pull the IOT Wifi Docker Image
@@ -151,10 +131,10 @@ a template or just it unmodified for testing. You can mount the
 configuration file into the container or specify a location with
 an environment variable.
 
-Using the default configuration file and location for testing:
+Use the default configuration file and location for testing:
 
 ```bash
-# Download the default confguration file
+# Download the default configuration file
 
 $ wget https://raw.githubusercontent.com/cjimti/iotwifi/master/cfg/wificfg.json
 
@@ -183,21 +163,17 @@ The default configuration looks like this:
 }
 ```
 
-You may want to change the **ssid** (AP/Hostspt Name) and the the **wpa_passphrase**
-to something more appropriate to your needs. However the defaults are fine
-for testing.
+You may want to change the **ssid** (AP/Hotspot Name) and the **wpa_passphrase** to something more appropriate to your needs. However, the defaults are fine for testing.
 
 ### Run The IOT Wifi Docker Container
 
 The following `docker run` command will create a running Docker container from
-the **[cjimti/iotwifi]** Docker image we pulled in the steps above. The container
-needs to run in a **privileged mode** and have access to the **host network** (the
-Raspberry Pi device) in order to configure and manage the network interfaces on
-the the Raspberry Pi. We will also need to mount the configuration file.
+the **[cjimti/iotwifi]** Docker image we pulled in the steps above. The container needs to run in a **privileged mode** and have access to the **host network** (the
+Raspberry Pi device) to configure and manage the network interfaces on
+the Raspberry Pi. We will also need to mount the configuration file.
 
 We will run it in the foreground to observe the startup process. If you want
-it to run the the packground you need to remove the `--rm` and pass a the `-d`
-flag. If you want to it restart on reboot or failure you can pass the flag
+it to run the background, you need to remove the `--rm` and pass the `-d` flag. If you want to it restart on reboot or failure, you can pass the flag
 `--restart=unless-stopped`. 
 
 [Read more on the `docker run` command.](https://docs.docker.com/engine/reference/run/)
@@ -209,7 +185,7 @@ $ docker run --rm --privileged --net host \
 ```
 
 The IOT Wifi container outputs logs in the JSON format. While this makes
-them a bit more difficult to read, we can feed them directly (or indirectly)
+them a bit more challenging to read, we can feed them directly (or indirectly)
 into tools like Elastic Search or other databases for alerting or analytics.
 
 You should see some initial JSON objects with messages like `Starting IoT Wifi...`:
@@ -218,7 +194,7 @@ You should see some initial JSON objects with messages like `Starting IoT Wifi..
 {"hostname":"raspberrypi","level":30,"msg":"Starting IoT Wifi...","name":"iotwifi","pid":0,"time":"2018-03-15T20:19:50.374Z","v":0}
 ```
 
-Keeping the current terminal open you can login on another terminal and
+Keeping the current terminal open, you can log in to another terminal and
 take a look the network interfaces on the Raspberry Pi.
 
 ```bash
@@ -239,8 +215,7 @@ uap0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 ```
 
-The standard wifi interface **wlan0** should be available, yet unconfigured 
-since we are not yet connected to an external wifi network (access point).
+The standard wifi interface **wlan0** should be available, yet unconfigured since we have not yet connected to an external wifi network (access point).
 
 ```plain
 wlan0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
@@ -253,16 +228,11 @@ wlan0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
 
 ### Connect to the Pi over Wifi
 
-On your laptop or phone you should now see a Wifi Network named **iot-wifi-cfg-3**
-assuming you did not change it from the default. The default password for this
-network is **iotwifipass**. Once connected to this network you should get
-an IP address assigned in the range specified in the config: `192.168.27.100,192.168.27.150,1h`.
+On your laptop or phone, you should now see a Wifi Network named **iot-wifi-cfg-3** assuming you did not change it from the default. The default password for this network is **iotwifipass**. Once connected to this network you should get an IP address assigned to the range specified in the config: `192.168.27.100,192.168.27.150,1h`.
 
 ![Coeect Phone](/doc_assets/phone.jpg)
 
-Once connected open a web browser and go to http://192.168.27.1:8080/status. You
-Can access this APi enpoint on the Raspberry Pi device itself from `localhost`*.
-On on Pi try the curl command `curl http://localhost:8080/status`.
+Once connected open a web browser and go to http://192.168.27.1:8080/status. You can access this API endpoint on the Raspberry Pi device itself from `localhost`*. On on Pi try the curl command `curl http://localhost:8080/status`.
 
 You should receive a JSON message similar to the following:
 
@@ -270,12 +240,9 @@ You should receive a JSON message similar to the following:
 {"status":"OK","message":"status","payload":{"address":"b8:27:eb:fe:c8:ab","uuid":"a736659a-ae85-5e03-9754-dd808ea0d7f2","wpa_state":"INACTIVE"}}
 ```
 
-From now on I'll demonstrate API calls to the new container with the [`curl` command](https://en.wikipedia.org/wiki/CURL) on the
-device. If you were developing a Captive Portal or configuration web page you
-could translate these calls into Javascript and control the device Wifi with AJAX.
+From now on I'll demonstrate API calls to the new container with the [`curl` command](https://en.wikipedia.org/wiki/CURL) on the device. If you were developing a Captive Portal or configuration web page, you could translate these calls into Javascript and control the device Wifi with AJAX.
 
-> You can use my simple static web server IOT Web container for hosting a Captive Portal
-or configuration web page. See https://github.com/cjimti/iotweb.
+> You can use my simple static web server IOT Web container for hosting a Captive Portal or configuration web page. See https://github.com/cjimti/iotweb.
 
 To get a list of Wifi Networks the device can see, issue a call to the **scan** endpoint:
 
@@ -285,9 +252,7 @@ curl http://localhost:8080/scan
 
 ### Connect the Pi to a Wifi Network
 
-The device can connect to any Network it can see. After running a network scan 
-`curl http://localhost:8080/scan` you can choose a network and post the login
-credentials to IOT Web.
+The device can connect to any Network it can see. After running a network scan  `curl http://localhost:8080/scan` you can choose a network and post the login credentials to IOT Web.
 
 ```bash
 # post wifi credentials
@@ -295,15 +260,13 @@ $ curl -w "\n" -d '{"ssid":"home-network", "psk":"mystrongpassword"}' \
      -H "Content-Type: application/json" \
      -X POST localhost:8080/connect
 ```
-You should get a JSON response message after a few seconds. If everything went well you
-will see something like the following:
+You should get a JSON response message after a few seconds. If everything went well you will see something like the following:
 
 ```json
 {"status":"OK","message":"Connection","payload":{"ssid":"straylight-g","state":"COMPLETED","ip":"","message":""}}
 ```
 
-You can get the status at any time with the following call to the **status** end point. Here
-is an example:
+You can get the status at any time with the following call to the **status** endpoint. Here is an example:
 
 ```bash
 # get the wifi status
@@ -318,8 +281,7 @@ Sample return JSON:
 
 ### Check the network interface status
 
-The **wlan0** is now a client on a wifi network. In this case it received the IP
-address 192.168.86.116. We can check the status of **wlan0** with `ifconfig`*
+The **wlan0** is now a client on a wifi network. In this case, it received the IP address 192.168.86.116. We can check the status of **wlan0** with `ifconfig`*
 
 ```bash
 # check the status of wlan0 (wireless interface)
@@ -363,18 +325,14 @@ rtt min/avg/max/mdev = 16.075/20.138/23.422/3.049 ms
 ### Conclusion
 
 Wrapping the all complexity of wifi management into a small Docker
-container, accessible over a web based REST API reduces the
-dependencies on the device to only require Docker.
+container, accessible over a web-based REST API reduces the dependencies on the device to only require Docker.
 
-There are a number of ways to handle security using middleware or
-IP tables. Security can also be handled by a separate container.
+There are many ways to handle security using middleware or IP tables. A separate container can also manage security.
 
-Checkout the project [IOT Web](https://github.com/cjimti/iotweb) to get
-started with very small a static web container suitable for building
-a user interface for wifi management or captive portal.
+Check out the project [IOT Web](https://github.com/cjimti/iotweb) to get
+started with tiny a static web container suitable for building user interfaces for wifi management or captive portals.
 
-Submit a github issue or pull request if there are features or bug fixes
-you would like added to the project.
+Submit a Github issue or pull request if there are features or bug fixes you would like added to the project.
 
 
 [RASPBERRY PI 3 - WIFI STATION+AP]: http://imti.co/post/145442415333/raspberry-pi-3-wifi-station-ap
