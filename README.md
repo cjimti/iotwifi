@@ -7,7 +7,7 @@
 [![Docker Container Pulls](https://img.shields.io/docker/pulls/cjimti/iotwifi.svg)](https://hub.docker.com/r/cjimti/iotwifi/)
 
 IOT Wifi is very small/8MB Docker Container built for the Raspberry Pi 3.
-IOT Wifi exposes a simple JSON based REST API for controlling the wireless network interface. This container allows the Raspberry Pi accept wifi connections as an access point (aka AP) while at the same time connecting to an existing wifi network (station mode).
+IOT Wifi exposes a simple JSON based REST API for controlling the wireless network interface. This container allows the Raspberry Pi to accept wifi connections as an access point (aka AP) while at the same time connecting to an existing wifi network (station mode).
 
 Go (Golang) was used to develop the main application code, to produce a minimal docker image with great performance. The container runs [Alpine Linux](https://alpinelinux.org/) with small, optimized versions of [hostapd], [wpa_supplicant] and [dnsmasq], controlled by the container's API endpoints.
 
