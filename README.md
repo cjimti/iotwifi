@@ -252,7 +252,7 @@ curl http://localhost:8080/scan
 
 ### Connect the Pi to a Wifi Network
 
-The device can connect to any Network it can see. After running a network scan  `curl http://localhost:8080/scan` you can choose a network and post the login credentials to IOT Web.
+The device can connect to any network it can see. After running a network scan  `curl http://localhost:8080/scan` you can choose a network and post the login credentials to IOT Web.
 
 ```bash
 # post wifi credentials
