@@ -279,7 +279,7 @@ func (wpa *WpaCfg) ScanNetworks() (map[string]WpaNetwork, error) {
 			fields := strings.Fields(netRecord)
 
 			if len(fields) > 4 {
-				ssid := strings.Join(fields[4:], ",")
+				ssid := strings.Join(fields[4:], " ")
 				wpaNetworks[ssid] = WpaNetwork{
 					Bssid:       fields[0],
 					Frequency:   fields[1],

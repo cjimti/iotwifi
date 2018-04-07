@@ -118,6 +118,8 @@ func RunWifi(log bunyan.Logger, messages chan CmdMessage, cfgLocation string) {
 
 	command.StartDnsmasq()
 
+	// TODO: check to see if we are stuck in a scanning state before
+	// if in a scanning state set a timeout before resetting
 	go func() {
 		for {
 			wpacfg.ScanNetworks()
