@@ -1,12 +1,13 @@
 IMAGE    ?= cjimti/iotwifi
 NAME     ?= iotwifi
+VERSION  ?= 1.0.4
 
 all: build push
 
 dev: dev_build dev_run
 
 build:
-	docker build -t $(IMAGE) .
+	docker build -t $(IMAGE):arm32v6-$(VERSION) .
 
 push:
 	docker push $(IMAGE)
