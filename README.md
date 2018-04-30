@@ -1,3 +1,7 @@
+**Update**: Due to my day job taking up some additional time, version 2 will be released in 2-3 weeks. I am shooting for June at the latest. If you are interested in joining this project as a contributor please open an issue. Version to aims to split up the host and client functionality and add more fine grain control and configuration. I also have a contributor interested in releasing a web GUI as an add-on. The essence of the project will however remain JSON based API control of wifi.
+
+**Update**: Tested and functioning on well on the [Raspberry Pi 3 B+](https://amzn.to/2jfXhCA) and [Raspberry Pi 3 B](https://amzn.to/2Kq9Doa). Looking to support additional SOCs in upcoming versions. (Disclosure: the Pi links to Amazon are affiliate links, why not?)
+
 # IOT Wifi (Raspberry Pi AP + Client)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/cjimti/iotwifi)](https://goreportcard.com/report/github.com/cjimti/iotwifi)
@@ -8,7 +12,7 @@
 
 [![Waffle.io - Columns and their card count](https://badge.waffle.io/cjimti/iotwifi.svg?columns=all)](https://waffle.io/cjimti/iotwifi)
 
-IOT Wifi is very small/8MB Docker Container built for the Raspberry Pi 3.
+IOT Wifi is very small/8MB Docker Container built for the [Raspberry Pi 3](https://amzn.to/2jfXhCA).
 IOT Wifi exposes a simple JSON based REST API for controlling the wireless network interface. This container allows the Raspberry Pi to accept wifi connections as an access point (aka AP) while at the same time connecting to an existing wifi network (station mode).
 
 Go (Golang) was used to develop the main application code, to produce a minimal docker image with great performance. The container runs [Alpine Linux](https://alpinelinux.org/) with small, optimized versions of [hostapd], [wpa_supplicant] and [dnsmasq], controlled by the container's API endpoints.
