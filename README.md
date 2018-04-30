@@ -15,7 +15,7 @@ Go (Golang) was used to develop the main application code, to produce a minimal 
 
 If you have a Raspberry Pi 3 and you want to provide wifi based configuration abilities, all you need is Docker installed and a little over 8MB of free drive space.
 
-![Raspberry Pi AP + Client](/doc_assets/pi.jpg)
+[![Raspberry Pi AP + Client](/doc_assets/pi.jpg)](https://amzn.to/2jfXhCA)
 
 Table of Contents
 =================
@@ -338,7 +338,7 @@ Submit a Github issue or pull request if there are features or bug fixes you wou
 
 
 [RASPBERRY PI 3 - WIFI STATION+AP]: http://imti.co/post/145442415333/raspberry-pi-3-wifi-station-ap
-[Raspberry Pi]: https://www.raspberrypi.org/
+[Raspberry Pi]: https://amzn.to/2jfXhCA
 [Raspian]: https://www.raspberrypi.org/downloads/raspbian/
 [Noobs]: https://www.raspberrypi.org/downloads/noobs/
 [hostapd]: https://w1.fi/hostapd/
