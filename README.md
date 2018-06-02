@@ -1,4 +1,4 @@
-**Update - 20180601**: Created a new fork at https://github.com/txn2/txwifi where any future development should happen. **Looking for contributors**. If you are interested in joining the [txn2][https://txn2.com] team please send an email with your github username to human@txn2.com.
+**Update - 20180601**: Created a new fork at https://github.com/txn2/txwifi where any future development should happen. **Looking for contributors**. If you are interested in joining the [txn2](https://txn2.com) team please send an email with your github username to human@txn2.com.
 
 **Update**: Tested and functioning on well on the [Raspberry Pi 3 B+](https://amzn.to/2jfXhCA) and [Raspberry Pi 3 B](https://amzn.to/2Kq9Doa). Looking to support additional SOCs in upcoming versions. (Disclosure: the Pi links to Amazon are affiliate links, why not?)
 
