@@ -1,4 +1,4 @@
-**Update - 20180429**: Due to my day job taking up some additional time, version 2 will be released in 2-3 weeks. I am shooting for June at the latest. If you are interested in joining this project as a contributor please open an issue. Version 2 aims to split up the host and client functionality and add more fine-grain control and configuration. I also have a contributor interested in releasing a web GUI as an add-on. The essence of the project will however remain JSON based API control of wifi.
+**Update - 20180601**: Created a new fork at https://github.com/txn2/txwifi where any future development should happen. **Looking for contributors**. If you are interested in joining the [txn2][https://txn2.com] team please send an email with your github username to human@txn2.com.
 
 **Update**: Tested and functioning on well on the [Raspberry Pi 3 B+](https://amzn.to/2jfXhCA) and [Raspberry Pi 3 B](https://amzn.to/2Kq9Doa). Looking to support additional SOCs in upcoming versions. (Disclosure: the Pi links to Amazon are affiliate links, why not?)
 
