@@ -194,6 +194,17 @@ $ docker run --rm --privileged --net host \
       cjimti/iotwifi
 ```
 
+Optionally, you can also provide a `wpa_supplicant.conf`, like so:
+
+```bash
+$ docker run --rm --privileged --net host \
+      -v $(pwd)/wificfg.json:/cfg/wificfg.json \
+      -v <HOST_PATH>/wpa_supplicant.conf:<CONTAINER_PATH>/wpa_supplicant.conf \
+      cjimti/iotwifi
+```
+
+Where `<CONTAINER_PATH>` is the path to `wpa_supplicant.conf` specified in `wificfg.json`.
+
 The IOT Wifi container outputs logs in the JSON format. While this makes
 them a bit more challenging to read, we can feed them directly (or indirectly)
 into tools like Elastic Search or other databases for alerting or analytics.
