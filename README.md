@@ -2,9 +2,9 @@
 
 **NOTICE**: This project is intended to aid in developing "configure wifi over wifi" solutions for IOT projects using the Raspberry Pi. The main use case for this project is to reproduce functionaly common to deivces like Nest or Echo, where the user turns on the device, connects to it and confiures it for wifi. I have over 800 devices running this software in production and all have had their wifi configured using it. 
 
-**This is not a captive portal project. While I have personaly used it for this, it requires additional networking and can be unstable. I don't support this use and so your millage may vary.***
+**This is not a captive portal project. While I have personaly used it for this, it requires additional networking and can be unstable. I don't support this use and so your millage may vary.**
 
-**iotwifi** is only expected to run properly on stock Raspberry Pis not not tested on any other hardware configurations.
+**iotwifi** is only expected to run properly on stock Raspberry Pis and not tested on any other hardware configurations.
 
 # IOT Wifi (Raspberry Pi AP + Client)
 
